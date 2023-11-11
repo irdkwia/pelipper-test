@@ -17,7 +17,6 @@ class CustomHandler(BaseRequestHandler):
         return bytes(field).decode("ascii")
         
     def sendmessage(self, info=[]):
-        print(info)
         for k, v in info:
             if v is None:
                 continue

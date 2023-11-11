@@ -278,7 +278,6 @@ class CustomHandler(BaseHTTPRequestHandler):
             ctype = self.headers.get('content-type')
             if ctype=="application/x-www-form-urlencoded":
                 data = self.parse_form()
-                print(data)
                 if data["action"]=="acctcreate":
                     res = dict()
                     res["returncd"] = "001" #MAX 3
