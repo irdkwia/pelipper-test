@@ -278,41 +278,54 @@ class CustomHandler(BaseHTTPRequestHandler):
             ctype = self.headers.get('content-type')
             if ctype=="application/x-www-form-urlencoded":
                 data = self.parse_form()
-                res = dict()
-                gbsr = data["gsbrcd"]
-                gamecd = data["gamecd"]
-                elist = Connection.get_elements(GlobalProfile, {"gbsr": gbsr})
-                if len(elist)>0:
-                    gprofile = elist[0]
-                    profile = Connection.get_elements(Profile, {"pid": gprofile.profileid})[0]
+                print(data)
+                if data["action"]=="acctcreate":
+                    res = dict()
+                    res["returncd"] = "001" #MAX 3
+                    res["token"] = "" #MAX 300
+                    res["locator"] = "myserver.com" #MAX 50
+                    res["challenge"] = "" #MAX 8
+                    res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
+                    self.send_form(res)
+                elif data["action"]=="login":
+                    res = dict()
+                    gbsr = data["gsbrcd"]
+                    gamecd = data["gamecd"]
+                    elist = Connection.get_elements(GlobalProfile, {"gbsr": gbsr})
+                    if len(elist)>0:
+                        gprofile = elist[0]
+                        profile = Connection.get_elements(Profile, {"pid": gprofile.profileid})[0]
+                    else:
+                        uid = int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x7FFFFFFF
+                        gprofile = GlobalProfile()
+                        gprofile.gbsr = gbsr
+                        gprofile.game = gamecd
+                        gprofile.userid = uid
+                        gprofile.uniquenick = gbsr
+                        gprofile.profileid = uid
+                        profile = Profile()
+                        profile.pid = uid
+                        Connection.insert_elements([gprofile, profile])
+                    if gamecd in ["C2SE", "C2SP", "C2SJ"]:
+                        profile.game = GAME_SKY
+                    elif gamecd in ["YFYE", "YFYP", "YFYJ"]:
+                        profile.game = GAME_DARKNESS
+                    elif gamecd in ["YFTE", "YFTP", "YFTJ"]:
+                        profile.game = GAME_TIME
+                    else:
+                        profile.game = 0
+                    gprofile._token = gbsr+''.join([choice(TOKENPOOL) for i in range(48)])
+                    gprofile._challenge = ''.join([choice(TOKENPOOL) for i in range(8)])
+                    Connection.update_elements([gprofile, profile])
+                    res["returncd"] = "001" #MAX 3
+                    res["token"] = gprofile._token #MAX 300
+                    res["locator"] = "myserver.com" #MAX 50
+                    res["challenge"] = gprofile._challenge #MAX 8
+                    res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
+                    self.send_form(res)
                 else:
-                    uid = int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x7FFFFFFF
-                    gprofile = GlobalProfile()
-                    gprofile.gbsr = gbsr
-                    gprofile.game = gamecd
-                    gprofile.userid = uid
-                    gprofile.uniquenick = gbsr
-                    gprofile.profileid = uid
-                    profile = Profile()
-                    profile.pid = uid
-                    Connection.insert_elements([gprofile, profile])
-                if gamecd in ["C2SE", "C2SP", "C2SJ"]:
-                    profile.game = GAME_SKY
-                elif gamecd in ["YFYE", "YFYP", "YFYJ"]:
-                    profile.game = GAME_DARKNESS
-                elif gamecd in ["YFTE", "YFTP", "YFTJ"]:
-                    profile.game = GAME_TIME
-                else:
-                    profile.game = 0
-                gprofile._token = gbsr+''.join([choice(TOKENPOOL) for i in range(48)])
-                gprofile._challenge = ''.join([choice(TOKENPOOL) for i in range(8)])
-                Connection.update_elements([gprofile, profile])
-                res["returncd"] = "001" #MAX 3
-                res["token"] = gprofile._token #MAX 300
-                res["locator"] = "myserver.com" #MAX 50
-                res["challenge"] = gprofile._challenge #MAX 8
-                res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
-                self.send_form(res)
+                    self.send_response(404)
+                    self.end_headers()
             else:
                 self.send_response(404)
                 self.end_headers()
