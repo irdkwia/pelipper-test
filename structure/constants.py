@@ -2,16 +2,11 @@ GAME_TIME = 0
 GAME_DARKNESS = 1
 GAME_SKY = 2
 
-WEB_REDIRECT = "/pokedungeonds/web"
-REDIRECT_START = "/redirect/"
-SALT = b'TXqjDDOLhPySKSztgBHY'
-RNGMUL = 0x0001bd95
-RNGADD = 0x00007d99
-RNGMOD = 0x00000200
-CHECKMASK = 0x613c4964
-GAMENAME = b'pokedungeonds'
+UNIFIED_TABLES = ["globalprofile", "profile", "buddylist"]
 
-PROFILE_RQ = dict()
+SALT = b'TXqjDDOLhPySKSztgBHY'
+CHECKMASK = 0x613c4964
+BASEGAME = 'pokedungeonds'
 
 TOKENPOOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 

@@ -6,21 +6,29 @@ from hashlib import md5
 import time
 
 class Connection:
-
-    @staticmethod
-    def connect():
+    def __init__(self, subname=None):
+        self.subname = subname
+        
+    def unifiedname(self, clsname):
+        clsname = clsname.lower()
+        if self.subname is None:
+            return clsname
+        if clsname in UNIFIED_TABLES:
+            return clsname
+        return self.subname+"_"+clsname
+        
+    def connect(self):
         return sqlite3.connect("database/pelipper.db")
     
-    @staticmethod
-    def update_elements(elist, conditions=None):
-        con = Connection.connect()
+    def update_elements(self, elist, conditions=None):
+        con = self.connect()
         cur = con.cursor()
         for element in elist:
             keys = element.__class__.key
             d = {k if not k.startswith("_") else k[1:]: v for k, v in element.__dict__.items()}
             d["udate"] = int(time.time())
             
-            query = "UPDATE %s SET %s" % (element.__class__.__name__, ",".join("%s=:%s" % (k, k) for k in d))
+            query = "UPDATE %s SET %s" % (self.unifiedname(element.__class__.__name__), ",".join("%s=:%s" % (k, k) for k in d))
             if conditions is None:
                 conditions = dict()
             query += " WHERE %s" % (" AND ".join(["%s=:%s"%(k, k) for k in keys]+["%s=:_%s" % (k, k) for k in conditions]))
@@ -32,14 +40,13 @@ class Connection:
         con.close()
         return nbupdates
     
-    @staticmethod
-    def increment_count(elist, counters, conditions=None):
-        con = Connection.connect()
+    def increment_count(self, elist, counters, conditions=None):
+        con = self.connect()
         cur = con.cursor()
         for element in elist:
             keys = element.__class__.key
             
-            query = "UPDATE %s SET %s" % (element.__class__.__name__, ",".join("%s=%s+1" % (k, k) for k in counters))
+            query = "UPDATE %s SET %s" % (self.unifiedname(element.__class__.__name__), ",".join("%s=%s+1" % (k, k) for k in counters))
             if conditions is None:
                 conditions = dict()
             query += " WHERE %s" % (" AND ".join(["%s=:%s"%(k, k) for k in keys]+["%s=:_%s" % (k, k) for k in conditions]))
@@ -52,14 +59,13 @@ class Connection:
         con.close()
         return nbupdates
     
-    @staticmethod
-    def insert_elements(elist):
-        con = Connection.connect()
+    def insert_elements(self, elist):
+        con = self.connect()
         cur = con.cursor()
         for element in elist:
             d = {k if not k.startswith("_") else k[1:]: v for k, v in element.__dict__.items()}
             d["udate"] = int(time.time())
-            query = "INSERT INTO %s (%s) VALUES (%s)" % (element.__class__.__name__, ",".join(d), ",".join(":"+k for k in d))
+            query = "INSERT INTO %s (%s) VALUES (%s)" % (self.unifiedname(element.__class__.__name__), ",".join(d), ",".join(":"+k for k in d))
             cur.execute(query, d)
         con.commit()
         cur.execute("SELECT total_changes()")
@@ -67,11 +73,10 @@ class Connection:
         con.close()
         return nbupdates
     
-    @staticmethod
-    def get_elements(cls, conditions=None, ordering=None, limit=None):
-        con = Connection.connect()
+    def get_elements(self, cls, conditions=None, ordering=None, limit=None):
+        con = self.connect()
         cur = con.cursor()
-        query = "SELECT * FROM %s" % (cls.__name__)
+        query = "SELECT * FROM %s" % (self.unifiedname(cls.__name__))
         if conditions is not None:
             query += " WHERE %s" % (" AND ".join("%s=:%s" % (k, k) for k in conditions))
         if ordering is not None:
@@ -95,11 +100,10 @@ class Connection:
         con.close()
         return lst
     
-    @staticmethod
-    def delete_elements(cls, conditions):
-        con = Connection.connect()
+    def delete_elements(self, cls, conditions):
+        con = self.connect()
         cur = con.cursor()
-        query = "DELETE FROM %s" % (cls.__name__)
+        query = "DELETE FROM %s" % (self.unifiedname(cls.__name__))
         if conditions is not None:
             query += " WHERE %s" % (",".join("%s=:%s" % (k, k) for k in conditions))
         cur.execute(query, conditions)

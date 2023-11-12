@@ -43,10 +43,10 @@ class CustomHandler(BaseRequestHandler):
             data[f] = self.getfield()
             f = self.getfield()
         if action=="login":
-            self.profile = Connection.get_elements(GlobalProfile, {"token": data["authtoken"]})[0]
+            self.profile = self.db.get_elements(GlobalProfile, {"token": data["authtoken"]})[0]
             print("Log in")
             assert data["response"]==self.challenge(self.profile._challenge, data["authtoken"], data["challenge"], self.mmchal)
-            buddylist = [str(b.buddy) for b in Connection.get_elements(BuddyList, {"pid": self.profile.profileid})]
+            buddylist = [str(b.buddy) for b in self.db.get_elements(BuddyList, {"pid": self.profile.profileid})]
             self.sendmessage([("bdy", len(buddylist)), ("list", ",".join(buddylist))])
             #for b in buddylist:
             #    self.sendmessage([("bm", "100"),("f", b),("msg","|s|0|ss|Offline")])
@@ -59,22 +59,22 @@ class CustomHandler(BaseRequestHandler):
             for k, v in data.items():
                 if k in self.profile.__dict__:
                     setattr(self.profile, k, v)
-            Connection.update_elements([self.profile])
+            self.db.update_elements([self.profile])
         elif action=="status":
             print("Status",actinfo)
-            buddylist = [str(b.buddy) for b in Connection.get_elements(BuddyList, {"pid": self.profile.profileid})]
+            buddylist = [str(b.buddy) for b in self.db.get_elements(BuddyList, {"pid": self.profile.profileid})]
             #for b in buddylist:
             #    self.sendmessage([("bm", "100"),("f", b),("msg","|s|0|ss|Offline")])
         elif action=="addbuddy":
             print("Add buddy",data["newprofileid"])
-            if len(Connection.get_elements(BuddyList, {"pid": self.profile.profileid, "buddy": int(data["newprofileid"])}))>0:
+            if len(self.db.get_elements(BuddyList, {"pid": self.profile.profileid, "buddy": int(data["newprofileid"])}))>0:
                 self.sendmessage([("error", ""),("err", 1539),("errmsg","The profile requested is already a buddy.")])
             else:
                 pass
                 #bd = BuddyList()
                 #bd.pid = self.profile.profileid
                 #bd.buddy = int(data["newprofileid"])
-                #Connection.insert_elements([bd])
+                #self.db.insert_elements([bd])
                 #msg = "\r\n\r\n"
                 #msg += "|signed|" + "d41d8cd98f00b204e9800998ecf8427f"
                 #self.sendmessage([("bm", "4"),("f", data["newprofileid"]),("msg","")])
@@ -92,6 +92,7 @@ class CustomHandler(BaseRequestHandler):
         return True
         
     def handle(self):
+        self.db = Connection()
         self.profile = None
         self.mmchal = ''.join([choice(TOKENPOOL) for i in range(10)])
         self.sendmessage([("lc", "1"), ("challenge", self.mmchal), ("id", "1")])

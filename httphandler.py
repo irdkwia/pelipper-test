@@ -60,11 +60,18 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(buffer)))
             self.wfile.write(buffer)
-        elif psplit.path.startswith(WEB_REDIRECT):
+            return
+        sid = psplit.path.find("/", 1)
+        if sid!=-1 and psplit.path[sid:].startswith("/web"):
             self.upgrade11()
+            hackname = psplit.path[1:sid]
+            if hackname==BASEGAME:
+                hackname = None
+            db = Connection(hackname)
+            new_path = psplit.path[sid+4:]
             query = parse_qs(psplit.query)
             pid = int(query["pid"][0])
-            prf = Connection.get_elements(Profile, {"pid": pid})
+            prf = db.get_elements(Profile, {"pid": pid})
             if len(prf)==0:
                 print("PID Not Found")
                 self.send_response(401)
@@ -105,7 +112,6 @@ class CustomHandler(BaseHTTPRequestHandler):
                     return
                 select = int.from_bytes(data[4:12], 'big')
                 data = data[12:]
-                new_path = psplit.path[len(WEB_REDIRECT):]
                 if CAPTURE:
                     print("SELECT: %016X"%select)
                     with open("capture/"+new_path.replace("/", "_").replace(".", "_")+"_"+datetime.utcnow().strftime("%Y%m%d%H%M%S")+".bin", 'wb') as file:
@@ -115,19 +121,19 @@ class CustomHandler(BaseHTTPRequestHandler):
                 statuscode = 0
                 addstatus = True
                 if new_path in ["/team/teamExist.asp", "/team/teamEntry.asp"]:
-                    td = Connection.get_elements(TeamData, {"tid": select})
+                    td = db.get_elements(TeamData, {"tid": select})
                     if len(td)>0:
                         td = td[0]
                         buffer += b'\x00\x00\x00\x01'+td.getdata(prf.lang if prf.unified else None)[8:]
                     else:
                         buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/team/teamList.asp":
-                    tlist = Connection.get_elements(TeamData, {"rank": select&0xFFFFFFFF} if select&0x800000000 else None, ["udate DESC"], int.from_bytes(data[0:8], 'big'))
+                    tlist = db.get_elements(TeamData, {"rank": select&0xFFFFFFFF} if select&0x800000000 else None, ["udate DESC"], int.from_bytes(data[0:8], 'big'))
                     buffer += len(tlist).to_bytes(8, 'big')
                     for td in tlist:
                         buffer += td.getdata(prf.lang if prf.unified else None)
                 elif new_path=="/team/teamRegist.asp":
-                    Connection.delete_elements(TeamData, {"pid": prf.pid})
+                    db.delete_elements(TeamData, {"pid": prf.pid})
                     td = TeamData()
                     td.pid = prf.pid
                     td.tid = prf.pid*111
@@ -136,19 +142,19 @@ class CustomHandler(BaseHTTPRequestHandler):
                     td.lang = prf.lang
                     td.pkmn = data
                     buffer += td.tid.to_bytes(8, 'big')
-                    Connection.insert_elements([td])
+                    db.insert_elements([td])
                 elif new_path in ["/rescue/rescueExist.asp", "/rescue/rescueEntry.asp"]:
-                    rq = Connection.get_elements(RescueRequest, {"rid": select, "completed": 0})
+                    rq = db.get_elements(RescueRequest, {"rid": select, "completed": 0})
                     if len(rq)>0:
                         rq = rq[0]
                         if new_path=="/rescue/rescueEntry.asp":
-                            Connection.increment_count([rq], ["requested"])
+                            db.increment_count([rq], ["requested"])
                         buffer += b'\x00\x00\x00\x01'+rq.getdata(prf.lang if prf.unified else None)[8:]
                     else:
                         buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/rescue/rescueList.asp":
                     method = int.from_bytes(data[16:20], 'big')
-                    rlist = Connection.get_elements(RescueRequest, {"completed": 0}, ["requested ASC" if method==2 else "udate DESC",], int.from_bytes(data[8:16], 'big'))
+                    rlist = db.get_elements(RescueRequest, {"completed": 0}, ["requested ASC" if method==2 else "udate DESC",], int.from_bytes(data[8:16], 'big'))
                     buffer += len(rlist).to_bytes(8, 'big')
                     for rq in rlist:
                         buffer += rq.getdata(prf.lang if prf.unified else None)[:180]
@@ -169,13 +175,13 @@ class CustomHandler(BaseHTTPRequestHandler):
                     rq.title = data[32:68].decode("utf-16-be").replace('\x00', '')
                     rq.message = data[68:140].decode("utf-16-be").replace('\x00', '')
                     buffer += rq.rid.to_bytes(8, 'big')
-                    Connection.insert_elements([rq])
+                    db.insert_elements([rq])
                 elif new_path=="/rescue/rescueComplete.asp":
-                    rq = Connection.get_elements(RescueRequest, {"rid": select})
+                    rq = db.get_elements(RescueRequest, {"rid": select})
                     if len(rq)>0:
                         rq = rq[0]
                         rq.completed = 1
-                        if Connection.update_elements([rq], {"completed": 0}):
+                        if db.update_elements([rq], {"completed": 0}):
                             aok = RescueAOK()
                             aok.rid = select
                             aok.code = rq.code
@@ -187,14 +193,14 @@ class CustomHandler(BaseHTTPRequestHandler):
                             aok.lang = prf.lang
                             aok.title = data[92:128].decode("utf-16-be").replace('\x00', '')
                             aok.message = data[128:200].decode("utf-16-be").replace('\x00', '')
-                            Connection.insert_elements([aok])
+                            db.insert_elements([aok])
                             buffer += b'\x00\x00\x00\x01'
                         else:
                             buffer += b'\x00\x00\x00\x00'
                     else:
                         statuscode = 1
                 elif new_path=="/rescue/rescueCheck.asp":
-                    aok = Connection.get_elements(RescueAOK, {"rid": select})
+                    aok = db.get_elements(RescueAOK, {"rid": select})
                     if len(aok)>0:
                         aok = aok[0]
                         buffer += b'\x00\x00\x00\x64'+aok.getdata(prf.lang if prf.unified else None)[8:]
@@ -206,10 +212,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                     thk.item = data[0:4]
                     thk.title = data[4:40].decode("utf-16-be").replace('\x00', '')
                     thk.message = data[40:112].decode("utf-16-be").replace('\x00', '')
-                    Connection.insert_elements([thk])
+                    db.insert_elements([thk])
                     buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/rescue/rescueReceive.asp":
-                    thk = Connection.get_elements(RescueThanks, {"rid": select})
+                    thk = db.get_elements(RescueThanks, {"rid": select})
                     if len(thk)>0:
                         thk = thk[0]
                         if thk.claimed:
@@ -255,14 +261,14 @@ class CustomHandler(BaseHTTPRequestHandler):
                 if addstatus:
                     buffer = bytearray(statuscode.to_bytes(4, 'big'))+buffer
                 buffer += self.conndigest(b64encode(buffer).decode("ascii").translate(str.maketrans({'+': '-', '/': '_'})).encode("ascii"), True).encode("ascii")
-                Connection.update_elements([prf])
+                db.update_elements([prf])
                 self.send_response(200)
                 self.send_header("Content-Length", str(len(buffer)))
                 self.end_headers()
                 self.wfile.write(buffer)
             else:
                 prf.currenthash = ''.join([choice(TOKENPOOL) for i in range(32)])
-                Connection.update_elements([prf])
+                db.update_elements([prf])
                 self.send_response(200)
                 self.send_header("Content-Length", "32")
                 self.end_headers()
@@ -287,13 +293,14 @@ class CustomHandler(BaseHTTPRequestHandler):
                     res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
                     self.send_form(res)
                 elif data["action"]=="login":
+                    db = Connection()
                     res = dict()
                     gbsr = data["gsbrcd"]
                     gamecd = data["gamecd"]
-                    elist = Connection.get_elements(GlobalProfile, {"gbsr": gbsr})
+                    elist = db.get_elements(GlobalProfile, {"gbsr": gbsr})
                     if len(elist)>0:
                         gprofile = elist[0]
-                        profile = Connection.get_elements(Profile, {"pid": gprofile.profileid})[0]
+                        profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
                     else:
                         uid = int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x7FFFFFFF
                         gprofile = GlobalProfile()
@@ -304,7 +311,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         gprofile.profileid = uid
                         profile = Profile()
                         profile.pid = uid
-                        Connection.insert_elements([gprofile, profile])
+                        db.insert_elements([gprofile, profile])
                     if gamecd in ["C2SE", "C2SP", "C2SJ"]:
                         profile.game = GAME_SKY
                     elif gamecd in ["YFYE", "YFYP", "YFYJ"]:
@@ -315,7 +322,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile.game = 0
                     gprofile._token = gbsr+''.join([choice(TOKENPOOL) for i in range(48)])
                     gprofile._challenge = ''.join([choice(TOKENPOOL) for i in range(8)])
-                    Connection.update_elements([gprofile, profile])
+                    db.update_elements([gprofile, profile])
                     res["returncd"] = "001" #MAX 3
                     res["token"] = gprofile._token #MAX 300
                     res["locator"] = "myserver.com" #MAX 50
