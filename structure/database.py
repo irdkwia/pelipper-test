@@ -73,20 +73,32 @@ class Connection:
         con.close()
         return nbupdates
     
-    def get_elements(self, cls, conditions=None, ordering=None, limit=None):
+    def get_elements(self, cls, conditions=None, ordering=None, limit=None, include=None, mutual=None):
         con = self.connect()
         cur = con.cursor()
-        query = "SELECT * FROM %s" % (self.unifiedname(cls.__name__))
+        uniname = self.unifiedname(cls.__name__)
+        if mutual is not None:
+            query = "SELECT l.* FROM %s l INNER JOIN %s r ON " % (uniname, uniname)
+            pf = "l."
+            query += " AND ".join("l.%s=r.%s AND l.%s=r.%s"%(m[0], m[1], m[1], m[0]) for m in mutual)
+        else:
+            query = "SELECT * FROM %s" % (uniname)
+            pf = ""
+
+        totalcond = []
+        d = dict()
         if conditions is not None:
-            query += " WHERE %s" % (" AND ".join("%s=:%s" % (k, k) for k in conditions))
+            totalcond.extend(pf+"%s=:%s" % (k, k) for k in conditions)
+            d.update(conditions)
+        if include is not None:
+            totalcond.extend(pf+"%s IN (%s)" % (k, ",".join([str(x) for x in v])) for k, v in include.items())
+        if len(totalcond)>0:
+            query += " WHERE %s" % (" AND ".join(totalcond))
         if ordering is not None:
             query += " ORDER BY %s" % (",".join(ordering))
         if limit is not None:
             query += " LIMIT %d" % (limit)
-        if conditions:
-            cur.execute(query, conditions)
-        else:
-            cur.execute(query)
+        cur.execute(query, d)
         desc = list(map(lambda x: x[0], cur.description))
         lst = []
         for gps in cur.fetchall():
@@ -105,7 +117,7 @@ class Connection:
         cur = con.cursor()
         query = "DELETE FROM %s" % (self.unifiedname(cls.__name__))
         if conditions is not None:
-            query += " WHERE %s" % (",".join("%s=:%s" % (k, k) for k in conditions))
+            query += " WHERE %s" % (" AND ".join("%s=:%s" % (k, k) for k in conditions))
         cur.execute(query, conditions)
         con.commit()
         cur.execute("SELECT total_changes()")

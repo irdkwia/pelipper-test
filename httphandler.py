@@ -128,7 +128,17 @@ class CustomHandler(BaseHTTPRequestHandler):
                     else:
                         buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/team/teamList.asp":
-                    tlist = db.get_elements(TeamData, {"rank": select&0xFFFFFFFF} if select&0x800000000 else None, ["udate DESC"], int.from_bytes(data[0:8], 'big'))
+                    method = int.from_bytes(data[8:12], 'big')
+                    if method==0:
+                        friends = db.get_elements(BuddyList, {"pid": prf.pid}, None, None, None, [("pid", "buddy")])
+                        c = None
+                        i = {"pid": [prf.pid]+[b.buddy for b in friends]}
+                    else:
+                        c = {"private": 0}
+                        i = None
+                        if select&0x800000000:
+                            c["rank"] = select&0xFFFFFFFF
+                    tlist = db.get_elements(TeamData, c, ["udate DESC"], int.from_bytes(data[0:8], 'big'), i)
                     buffer += len(tlist).to_bytes(8, 'big')
                     for td in tlist:
                         buffer += td.getdata(prf.lang if prf.unified else None)
@@ -141,6 +151,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     td.rank = select>>32
                     td.lang = prf.lang
                     td.pkmn = data
+                    td.private = select&0xFFFFFFFF
                     buffer += td.tid.to_bytes(8, 'big')
                     db.insert_elements([td])
                 elif new_path in ["/rescue/rescueExist.asp", "/rescue/rescueEntry.asp"]:
@@ -154,7 +165,14 @@ class CustomHandler(BaseHTTPRequestHandler):
                         buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/rescue/rescueList.asp":
                     method = int.from_bytes(data[16:20], 'big')
-                    rlist = db.get_elements(RescueRequest, {"completed": 0}, ["requested ASC" if method==2 else "udate DESC",], int.from_bytes(data[8:16], 'big'))
+                    if method==0:
+                        friends = db.get_elements(BuddyList, {"pid": prf.pid}, None, None, None, [("pid", "buddy")])
+                        c = None
+                        i = {"pid": [prf.pid]+[b.buddy for b in friends]}
+                    else:
+                        c = {"completed": 0, "private": 0}
+                        i = None
+                    rlist = db.get_elements(RescueRequest, c, ["requested ASC" if method==2 else "udate DESC",], int.from_bytes(data[8:16], 'big'))
                     buffer += len(rlist).to_bytes(8, 'big')
                     for rq in rlist:
                         buffer += rq.getdata(prf.lang if prf.unified else None)[:180]
@@ -164,11 +182,13 @@ class CustomHandler(BaseHTTPRequestHandler):
                         rq.code = select-0x10000000000000000
                     else:
                         rq.code = select
+                    rq.pid = prf.pid
                     rq.rid = (int.from_bytes(md5(pid.to_bytes(4, 'big')+bytes(randrange(256) for i in range(252))).digest(), 'big')%999999999999)+1
                     rq.uid = rq.rid
                     rq.dungeon = int.from_bytes(data[16:20], 'big')
                     rq.floor = int.from_bytes(data[20:24], 'big')
                     rq.seed = int.from_bytes(data[24:28], 'big')
+                    rq.private = int.from_bytes(data[28:32], 'big')
                     rq.team = prf.team
                     rq.game = prf.game
                     rq.lang = prf.lang

@@ -19,4 +19,5 @@ RESOLVER = {
     "gpcm.gs.nintendowifi.net": SERVER_ADDR,
     "pokedungeonds.master.gs.nintendowifi.net": SERVER_ADDR,
     "gamestats2.gs.nintendowifi.net": SERVER_ADDR,
+    "gpsp.gs.nintendowifi.net": SERVER_ADDR,
 }

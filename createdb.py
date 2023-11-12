@@ -84,6 +84,7 @@ for prefix in listprefix:
             lang INTEGER NOT NULL,
             team TEXT NOT NULL,
             pkmn BLOB NOT NULL,
+            private INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
     """ % prefix)
@@ -91,6 +92,7 @@ for prefix in listprefix:
 
     cur.execute("""
         CREATE TABLE %srescuerequest (
+            pid INTEGER NOT NULL,
             rid INTEGER NOT NULL PRIMARY KEY,
             uid INTEGER NOT NULL UNIQUE,
             code INTEGER NOT NULL,
@@ -104,6 +106,7 @@ for prefix in listprefix:
             message TEXT NOT NULL,
             completed INTEGER NOT NULL,
             requested INTEGER NOT NULL,
+            private INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
     """ % prefix)

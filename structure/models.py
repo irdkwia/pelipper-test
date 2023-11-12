@@ -77,6 +77,7 @@ class TeamData:
         self.lang = 8
         self.team = ""
         self.pkmn = bytes(256)
+        self.private = 0
         
     def getdata(self, langtarget):
         subbuffer = bytearray(36)
@@ -90,6 +91,7 @@ class TeamData:
 class RescueRequest:
     key = ["rid"]
     def __init__(self):
+        self.pid = 0
         self.rid = 0
         self.uid = 0
         self.code = 0
@@ -103,6 +105,7 @@ class RescueRequest:
         self.message = ""
         self.completed = 0
         self.requested = 0
+        self.private = 0
 
     def getdata(self, langtarget):
         subbuffer = bytearray(188)
