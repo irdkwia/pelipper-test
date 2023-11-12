@@ -22,13 +22,14 @@ You can alternatively run `runservers35.sh` or `runservers35.bat` according to y
 
 **If you can't run these scripts**
 Then run each of these scripts: 
-`python dnsserver.py` - Minimal DNS Server
-`python httpserver.py` - Main HTTP Server
-`python shttpserver2.py` - HTTPS Server (redirects to HTTP)
-`python tcpserver.py` - TCP Server
-`python udpserver.py` - UDP Server
+- `python dnsserver.py` - Minimal DNS Server
+- `python httpserver.py` - Main HTTP Server
+- `python shttpserver.py` - HTTPS Server (redirects to HTTP)
+- `python tcpserver.py` - TCP Server
+- `python tcpserver2.py` - Second TCP Server
+- `python udpserver.py` - UDP Server
 
-If you are below 3.5.5, run `python shttpserver.py` instead of `python shttpserver2.py`.
+If you are below 3.5.5, run `python oldshttpserver.py` instead of `python shttpserver.py`.
 
 Your Nintendo DS system must be connected to your server setting the
 DNS as the ip you set for SERVER_ADDR (which, since the NDS doesn't let

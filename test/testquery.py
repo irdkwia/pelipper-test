@@ -1,6 +1,6 @@
 import sqlite3
 
-con = sqlite3.connect("database/pelipper.db")
+con = sqlite3.connect("../database/pelipper.db")
 
 cur = con.cursor()
 

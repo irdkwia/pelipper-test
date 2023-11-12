@@ -1,4 +1,4 @@
-from tcphandler import *
+from handlers.tcphandler import *
 
 tcpserv = TCPServer((SERVER_ADDR, 29900), CustomHandler)
 

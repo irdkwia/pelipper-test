@@ -1,4 +1,4 @@
-from tcphandler import *
+from handlers.tcphandler import *
 
 def idle(obj):
     return
