@@ -44,14 +44,14 @@ class CustomHandler(BaseRequestHandler):
             f = self.getfield()
         if action=="login":
             self.profile = self.db.get_elements(GlobalProfile, {"token": data["authtoken"]})[0]
-            print("Log in")
+            #print("Log in")
             assert data["response"]==self.challenge(self.profile._challenge, data["authtoken"], data["challenge"], self.mmchal)
             buddylist = [str(b.buddy) for b in self.db.get_elements(BuddyList, {"pid": self.profile.profileid})]
             self.sendmessage([("lc", "2"), ("sesskey", "1"), ("proof", self.challenge(self.profile._challenge, data["authtoken"], self.mmchal, data["challenge"])), ("userid", self.profile.userid), ("profileid", self.profile.profileid), ("uniquenick", self.profile.uniquenick), ("lt", "1"), ("id", data["id"])])
             for b in buddylist:
                 self.sendmessage([("bm", "100"),("f", b),("msg","|s|0|ss|Offline")])
         elif action=="getprofile":
-            print("Get profile")
+            #print("Get profile")
             pid = int(data.get("profileid", self.profile.profileid))
             if pid==self.profile.profileid:
                 profile = self.profile
@@ -59,16 +59,16 @@ class CustomHandler(BaseRequestHandler):
                 profile = self.db.get_elements(GlobalProfile, {"profileid": pid})[0]
             self.sendmessage([("pi", "2")]+[(k, v) for k, v in profile.__dict__.items() if not k.startswith("_")]+[("id", data["id"])])
         elif action=="updatepro":
-            print("Update profile")
+            #print("Update profile")
             for k, v in data.items():
                 if k in self.profile.__dict__:
                     setattr(self.profile, k, v)
             self.db.update_elements([self.profile])
         elif action=="status":
-            print("Status",actinfo)
+            #print("Status",actinfo)
             buddylist = [str(b.buddy) for b in self.db.get_elements(BuddyList, {"pid": self.profile.profileid})]
         elif action=="addbuddy":
-            print("Add buddy",data["newprofileid"])
+            #print("Add buddy",data["newprofileid"])
             if len(self.db.get_elements(BuddyList, {"pid": self.profile.profileid, "buddy": int(data["newprofileid"])}))>0:
                 self.sendmessage([("error", ""),("err", 1539),("errmsg","The profile requested is already a buddy.")])
             else:
@@ -85,11 +85,13 @@ class CustomHandler(BaseRequestHandler):
         elif action=="delbuddy":
             self.db.delete_elements(BuddyList, {"pid": self.profile.profileid, "buddy": int(data["delprofileid"])})
         elif action=="authadd":
-            print("Auth Add")
+            #print("Auth Add")
+            pass
         elif action=="logout":
-            print("Log out")
+            #print("Log out")
+            pass
         elif action=="ka":
-            print("Keep alive")
+            #print("Keep alive")
             self.sendmessage([("ka", "")])
         elif action=="otherslist":
             finallist = [("otherslist", "")]

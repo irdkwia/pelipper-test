@@ -13,7 +13,7 @@ Once installed, run `pip install -r requirements.txt`.
 In `structure/constants.py`, change SERVER_ADDR to your server's public ip
 (or local ip if you want to test it locally **Note: Never set it as 127.0.0.1 or localhost, use one of your network interface ip instead**)
 
-Run `python createdb.py` to create a new empty database.
+Run `python createdb.py` to create a new empty database. You can also run `python populatedb.py` to populate your database with some minimal data for Wonder Mail S support.
 
 Then run `runservers.sh` or `runservers.bat` according to your operating system.
 

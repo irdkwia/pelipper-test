@@ -11,6 +11,7 @@ class CustomHandler(DatagramRequestHandler):
             toresolve += bytes([rq[off]])
             off += 1
         toresolve = bytes([x if x>0x20 else 0x2E for x in toresolve]).decode("ascii")
+        #print("Resolve:",toresolve)
         rq[2:4] = b'\x85\x80'
         rq[6:8] = b'\x00\x01'
         rip = bytes([int(x) for x in RESOLVER.get(toresolve, '8.8.8.8').split(".")])

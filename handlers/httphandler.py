@@ -7,6 +7,7 @@ import time
 from hashlib import sha1
 
 from structure.database import *
+from structure.tools import *
 
 TEMP_CHANGE = dict()
 
@@ -73,14 +74,14 @@ class CustomHandler(BaseHTTPRequestHandler):
             pid = int(query["pid"][0])
             prf = db.get_elements(Profile, {"pid": pid})
             if len(prf)==0:
-                print("PID Not Found")
+                #print("PID Not Found")
                 self.send_response(401)
                 self.end_headers()
                 return
             prf = prf[0]
             if "hash" in query:
                 if prf.currenthash is None or self.conndigest(prf.currenthash.encode("ascii"))!=query["hash"][0]:
-                    print("Hash Failed")
+                    #print("Hash Failed")
                     self.send_response(401)
                     self.end_headers()
                     return
@@ -90,30 +91,30 @@ class CustomHandler(BaseHTTPRequestHandler):
                 checksum = int.from_bytes(data[:4], 'big')
                 nc = sum(data[4:])
                 if checksum!=nc^CHECKMASK:
-                    print("Checksum Failed")
+                    #print("Checksum Failed")
                     self.send_response(401)
                     self.end_headers()
                     return
                 if pid!=int.from_bytes(data[4:8], 'little'):
-                    print("PID Failed")
+                    #print("PID Failed")
                     self.send_response(401)
                     self.end_headers()
                     return
                 if len(data)-12!=int.from_bytes(data[8:12], 'little'):
-                    print("Length Failed")
+                    #print("Length Failed")
                     self.send_response(401)
                     self.end_headers()
                     return
                 data = data[12:]
                 if int.from_bytes(data[:4], 'big')!=pid:
-                    print("PID2 Failed")
+                    #print("PID2 Failed")
                     self.send_response(401)
                     self.end_headers()
                     return
                 select = int.from_bytes(data[4:12], 'big')
                 data = data[12:]
                 if CAPTURE:
-                    print("SELECT: %016X"%select)
+                    #print("SELECT: %016X"%select)
                     with open("capture/"+new_path.replace("/", "_").replace(".", "_")+"_"+datetime.utcnow().strftime("%Y%m%d%H%M%S")+".bin", 'wb') as file:
                         file.write(data)
 
@@ -349,6 +350,59 @@ class CustomHandler(BaseHTTPRequestHandler):
                     res["challenge"] = gprofile._challenge #MAX 8
                     res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
                     self.send_form(res)
+                elif data["action"]=="SVCLOC":
+                    res = dict()
+                    res["returncd"] = "007" #MAX 3
+                    res["svchost"] = "pokedungeonds.wondermail.net" #MAX 64
+                    res["statusdata"] = "Y" #MAX 1
+                    res["servicetoken"] = "MyTokenWondermail" #MAX 300
+                    self.send_form(res)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+            else:
+                self.send_response(404)
+                self.end_headers()
+        elif psplit.path=="/download":
+            ctype = self.headers.get('content-type')
+            if ctype=="application/x-www-form-urlencoded":
+                data = self.parse_form()
+                db = Connection()
+                elist = db.get_elements(WMGameList, {"passwd": data["passwd"]})
+                if len(elist)==0:
+                    self.send_response(404)
+                    self.end_headers()
+                elif data["action"] in ["count", "list", "contents"]:
+                    wgame = elist[0]
+                    db = Connection(None if wgame.prefix==BASEGAME else wgame.prefix)
+                    buffer = bytearray()
+                    if data["action"]=="count":
+                        wmlist = db.get_elements(WMPassList)
+                        buffer += str(len(wmlist)*len(wgame.lang.split(","))).encode("ascii")
+                    elif data["action"]=="list":
+                        wmlist = db.get_elements(WMPassList)
+                        llist = [int(x) for x in wgame.lang.split(",")]
+                        # ID    BUFFER  NAME  NAME  NAME    NB
+                        for wm in wmlist:
+                            for l in llist:
+                                buffer += (str(l+wm.wid*10)+"\t"+b64encode(b"").decode("ascii").translate(str.maketrans({'+': '-', '/': '_', '=': '*'}))+"\t\t\t\t"+str(len(wm.data)+32)+"\r\n").encode("ascii")
+                    elif data["action"]=="contents":
+                        wmlist = db.get_elements(WMPassList, {"wid": int(data["contents"])//10})
+                        if len(wmlist)==0:
+                            element = bytes(0)
+                        else:
+                            element = wmlist[0].data
+                        buffer += (0x50443357).to_bytes(4, 'little')
+                        buffer += (0x08261522).to_bytes(4, 'little')
+                        buffer += calcsum(SOURCE_WM, element).to_bytes(4, 'little')
+                        # LANG
+                        buffer += (int(data["contents"])%10).to_bytes(4, 'little')
+                        buffer += bytes(0x10)
+                        buffer += element
+                    self.send_response(200)
+                    self.send_header("Content-Length", str(len(buffer)))
+                    self.end_headers()
+                    self.wfile.write(buffer)
                 else:
                     self.send_response(404)
                     self.end_headers()

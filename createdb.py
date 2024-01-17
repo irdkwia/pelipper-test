@@ -76,6 +76,14 @@ for prefix in listprefix:
             )
         """)
 
+        cur.execute("""
+            CREATE TABLE wmgamelist (
+                passwd TEXT NOT NULL PRIMARY KEY,
+                prefix TEXT NOT NULL,
+                lang TEXT NOT NULL
+            )
+        """)
+
     cur.execute("""
         CREATE TABLE %steamdata (
             pid INTEGER NOT NULL PRIMARY KEY,
@@ -138,6 +146,13 @@ for prefix in listprefix:
             message TEXT NOT NULL,
             claimed INTEGER NOT NULL,
             udate INTEGER NOT NULL
+        )
+    """ % prefix)
+
+    cur.execute("""
+        CREATE TABLE %swmpasslist (
+            wid INTEGER NOT NULL PRIMARY KEY,
+            data BLOB NOT NULL
         )
     """ % prefix)
 

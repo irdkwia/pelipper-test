@@ -174,3 +174,17 @@ class BuddyList:
     def __init__(self):
         self.pid = 0
         self.buddy = 0
+
+class WMGameList:
+    key = ["passwd"]
+    def __init__(self):
+        self.passwd = ""
+        self.prefix = ""
+        self.lang = ""
+
+class WMPassList:
+    key = ["passwd"]
+    def __init__(self):
+        self.wid = 0
+        self.data = bytes(17)
+
