@@ -10,17 +10,18 @@ BASEGAME = 'pokedungeonds'
 
 TOKENPOOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-SERVER_ADDR = "192.168.56.1" # Change this to your server public address
+SERVER_ADDR = "192.168.56.1"
+SERVER_ADDR_PUBLIC = "192.168.56.1" # Change this to your server public address
 
 RESOLVER = {
-    "conntest.nintendowifi.net": SERVER_ADDR,
-    "pokedungeonds.available.gs.nintendowifi.net": SERVER_ADDR,
-    "nas.nintendowifi.net": SERVER_ADDR,
-    "gpcm.gs.nintendowifi.net": SERVER_ADDR,
-    "pokedungeonds.master.gs.nintendowifi.net": SERVER_ADDR,
-    "gamestats2.gs.nintendowifi.net": SERVER_ADDR,
-    "gpsp.gs.nintendowifi.net": SERVER_ADDR,
-    "pokedungeonds.wondermail.net": SERVER_ADDR,
+    "conntest.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "pokedungeonds.available.gs.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "nas.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "gpcm.gs.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "pokedungeonds.master.gs.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "gamestats2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "gpsp.gs.nintendowifi.net": SERVER_ADDR_PUBLIC,
+    "pokedungeonds.wondermail.net": SERVER_ADDR_PUBLIC,
 }
 
 # MAILTY MISSIONTYPE MISSIONSPEC CLIENT TARGET TARGET2 TGITEM RWDTYPE RWDITEM RSTTYPE RSTARG FLVTEXT DUN FLOOR FIXED
