@@ -336,9 +336,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                         gprofile = elist[0]
                         profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
                     else:
-                        uid = int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x7FFFFFFF
+                        uid = (int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x3FFFFFFF)|0x40000000
                         while len(db.get_elements(ProfileChange, {"pid", uid}))>0 or len(db.get_elements(Profile, {"pid", uid}))>0:
-                            uid = (uid+1)&0x7FFFFFFF
+                            uid = ((uid+1)&0x3FFFFFFF)|0x40000000
                         gprofile = GlobalProfile()
                         gprofile._gbsr = gbsr
                         gprofile.game = gamecd

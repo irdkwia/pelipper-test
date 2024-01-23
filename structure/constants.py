@@ -19,8 +19,8 @@ RESOLVER = {
     "pokedungeonds.available.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
     "nas.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
     "gpcm.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
-    "pokedungeonds.master.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
-    "gamestats2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    "pokedungeonds.master.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    "gamestats2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
     "gpsp.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
     "pokedungeonds.wondermail.net": SERVER_ADDR_PUBLIC_2,
 }
