@@ -81,7 +81,8 @@ for prefix in listprefix:
             CREATE TABLE wmgamelist (
                 passwd TEXT NOT NULL PRIMARY KEY,
                 prefix TEXT NOT NULL,
-                lang TEXT NOT NULL
+                lang TEXT NOT NULL,
+                udate INTEGER NOT NULL
             )
         """)
 
@@ -90,6 +91,7 @@ for prefix in listprefix:
                 pid NOT NULL PRIMARY KEY,
                 team TEXT NOT NULL,
                 devname TEXT NOT NULL,
+                udate INTEGER NOT NULL,
                 UNIQUE("team","devname")
             )
         """)
@@ -162,7 +164,8 @@ for prefix in listprefix:
     cur.execute("""
         CREATE TABLE %swmpasslist (
             wid INTEGER NOT NULL PRIMARY KEY,
-            data BLOB NOT NULL
+            data BLOB NOT NULL,
+            udate INTEGER NOT NULL
         )
     """ % prefix)
 

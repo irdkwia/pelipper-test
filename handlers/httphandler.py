@@ -337,10 +337,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
                     else:
                         uid = int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x7FFFFFFF
-                        while db.get_elements(ProfileChange, {"pid", uid})>0 or db.get_elements(Profile, {"pid", uid})>0:
+                        while len(db.get_elements(ProfileChange, {"pid", uid}))>0 or len(db.get_elements(Profile, {"pid", uid}))>0:
                             uid = (uid+1)&0x7FFFFFFF
                         gprofile = GlobalProfile()
-                        gprofile.gbsr = gbsr
+                        gprofile._gbsr = gbsr
                         gprofile.game = gamecd
                         gprofile.userid = uid
                         gprofile.uniquenick = gbsr
@@ -355,9 +355,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                         if len(pf)>0:
                             pf = pf[0]
                             db.delete_elements(ProfileChange, {"pid": pf.pid})
+                            db.delete_elements(Profile, {"pid": profile.pid})
+                            db.delete_elements(GlobalProfile, {"gbsr": gprofile._gbsr})
                             gprofile.userid = pf.pid
                             gprofile.profileid = pf.pid
                             profile.pid = pf.pid
+                            db.insert_elements([gprofile, profile])
                     if gamecd in ["C2SE", "C2SP", "C2SJ"]:
                         profile.game = GAME_SKY
                     elif gamecd in ["YFYE", "YFYP", "YFYJ"]:
@@ -437,14 +440,16 @@ class CustomHandler(BaseHTTPRequestHandler):
         elif psplit.path=="/rewire":
             with open("static/rewire.html", 'rb') as file:
                 buffer = file.read()
+            ctype = self.headers.get('content-type')
             if ctype=="application/x-www-form-urlencoded":
                 try:
+                    db = Connection()
                     length = int(self.headers.get('content-length'))
                     denc = parse_qs(self.rfile.read(length).decode("ascii"))
                     if "devname" in denc and "team" in denc and "code" in denc:
-                        devname = denc["devname"]
-                        team = denc["team"]
-                        code = int(denc["code"])&0xFFFFFFFF
+                        devname = denc["devname"][0]
+                        team = denc["team"][0]
+                        code = int(denc["code"][0])&0xFFFFFFFF
                         if len(db.get_elements(Profile, {"devname": devname, "team": team}))>0:
                             buffer = buffer%(b'white', b'red', b'You must choose another User Name and Team Name combination.')
                         elif len(db.get_elements(Profile, {"pid": code}))>0:
@@ -455,7 +460,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                             pf.team = team
                             pf.devname = devname
                             db.insert_elements([pf])
-                            buffer = buffer%(b'black', b'lightblue', b'Successfully registered "%s" "%s" "%s"!'%(bytes(denc["devname"]), bytes(denc["team"]), bytes(denc["code"])))
+                            buffer = buffer%(b'black', b'lightblue', b'Successfully registered "%s" "%s" "%s"!'%(html.escape(devname).encode("utf-8"), html.escape(team).encode("utf-8"), html.escape(denc["code"][0]).encode("utf-8")))
                     else:
                         buffer = buffer%(b'white', b'red', b'Invalid form data')
                 except:
@@ -466,6 +471,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(buffer)))
+            self.wfile.write(buffer)
         else:
             self.send_response(404)
             self.end_headers()
