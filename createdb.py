@@ -89,7 +89,7 @@ for prefix in listprefix:
             CREATE TABLE profilechange (
                 pid NOT NULL PRIMARY KEY,
                 team TEXT NOT NULL,
-                devname TEXT NOT NULL
+                devname TEXT NOT NULL,
                 UNIQUE("team","devname")
             )
         """)

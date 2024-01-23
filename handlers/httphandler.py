@@ -64,7 +64,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.wfile.write(buffer)
             return
         elif psplit.path=="/rewire":
-            with open("rewire.html", 'rb') as file:
+            with open("static/rewire.html", 'rb') as file:
                 buffer = file.read()%(b'black', b'white', b'')
             self.send_response(200)
             self.end_headers()
@@ -434,8 +434,8 @@ class CustomHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
-        elif psplit.path=="/":
-            with open("rewire.html", 'rb') as file:
+        elif psplit.path=="/rewire":
+            with open("static/rewire.html", 'rb') as file:
                 buffer = file.read()
             if ctype=="application/x-www-form-urlencoded":
                 try:
