@@ -60,6 +60,7 @@ for prefix in listprefix:
                 email TEXT NOT NULL,
                 flags INTEGER NOT NULL,
                 team TEXT NOT NULL,
+                devname TEXT NOT NULL,
                 ccode INTEGER NOT NULL,
                 scode INTEGER NOT NULL,
                 unified INTEGER NOT NULL,
@@ -84,10 +85,19 @@ for prefix in listprefix:
             )
         """)
 
+        cur.execute("""
+            CREATE TABLE profilechange (
+                pid NOT NULL PRIMARY KEY,
+                team TEXT NOT NULL,
+                devname TEXT NOT NULL
+                UNIQUE("team","devname")
+            )
+        """)
+
     cur.execute("""
         CREATE TABLE %steamdata (
-            pid INTEGER NOT NULL PRIMARY KEY,
             tid INTEGER NOT NULL UNIQUE,
+            pid INTEGER,
             rank INTEGER NOT NULL,
             lang INTEGER NOT NULL,
             team TEXT NOT NULL,

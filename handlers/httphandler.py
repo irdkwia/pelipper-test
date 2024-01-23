@@ -1,3 +1,4 @@
+import html
 from http.server import BaseHTTPRequestHandler
 from random import randrange, choice
 from base64 import b64decode, b64encode
@@ -55,13 +56,21 @@ class CustomHandler(BaseHTTPRequestHandler):
         self.attributes()
         psplit = urlparse(self.path)
         if psplit.path=="/":
-            buffer = b'<html><body></body></html>'
+            buffer = b'<html><head><title>RE:EoS</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head><body><h1>No problem here</h1></body></html>'
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(buffer)))
             self.wfile.write(buffer)
             return
+        elif psplit.path=="/rewire":
+            with open("rewire.html", 'rb') as file:
+                buffer = file.read()%(b'black', b'white', b'')
+            self.send_response(200)
+            self.end_headers()
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(buffer)))
+            self.wfile.write(buffer)
         sid = psplit.path.find("/", 1)
         if sid!=-1 and psplit.path[sid:].startswith("/web"):
             self.upgrade11()
@@ -254,14 +263,18 @@ class CustomHandler(BaseHTTPRequestHandler):
                     email = data[:0x38].decode("ascii").replace('\x00', '')
                     scode = int.from_bytes(data[0x52:0x54], 'big')
                     if scode==0xFFFF:
-                        buffer += b'\x00\x00\x00\x01'
-                        scode = randrange(9999)+1
-                        print("Code: %03d-%04d"%(ccode,scode))
-                        TEMP_CHANGE[pid] = [email, scode, 0]
+                        # Disallow e-mails
+                        buffer += b'\x00\x00\x00\x00'
+                        #buffer += b'\x00\x00\x00\x01'
+                        #scode = randrange(9999)+1
+                        #print("Code: %03d-%04d"%(ccode,scode))
+                        #TEMP_CHANGE[pid] = [email, scode, 0]
                     elif scode==0x0000:
                         prf.email = ""
                         prf.ccode = 0
                         prf.scode = 0
+                        if pid in TEMP_CHANGE:
+                            del TEMP_CHANGE[pid]
                     elif pid in TEMP_CHANGE:
                         if TEMP_CHANGE[pid][0]!=email or TEMP_CHANGE[pid][1]!=scode:
                             buffer += b'\x00\x00\x00\x01'
@@ -324,6 +337,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
                     else:
                         uid = int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x7FFFFFFF
+                        while db.get_elements(ProfileChange, {"pid", uid})>0 or db.get_elements(Profile, {"pid", uid})>0:
+                            uid = (uid+1)&0x7FFFFFFF
                         gprofile = GlobalProfile()
                         gprofile.gbsr = gbsr
                         gprofile.game = gamecd
@@ -333,6 +348,16 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile = Profile()
                         profile.pid = uid
                         db.insert_elements([gprofile, profile])
+                    if profile.devname != data["devname"] or profile.team != data["ingamesn"]:
+                        profile.devname = data["devname"]
+                        profile.team = data["ingamesn"]
+                        pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team})
+                        if len(pf)>0:
+                            pf = pf[0]
+                            db.delete_elements(ProfileChange, {"pid": pf.pid})
+                            gprofile.userid = pf.pid
+                            gprofile.profileid = pf.pid
+                            profile.pid = pf.pid
                     if gamecd in ["C2SE", "C2SP", "C2SJ"]:
                         profile.game = GAME_SKY
                     elif gamecd in ["YFYE", "YFYP", "YFYJ"]:
@@ -409,6 +434,38 @@ class CustomHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
+        elif psplit.path=="/":
+            with open("rewire.html", 'rb') as file:
+                buffer = file.read()
+            if ctype=="application/x-www-form-urlencoded":
+                try:
+                    length = int(self.headers.get('content-length'))
+                    denc = parse_qs(self.rfile.read(length).decode("ascii"))
+                    if "devname" in denc and "team" in denc and "code" in denc:
+                        devname = denc["devname"]
+                        team = denc["team"]
+                        code = int(denc["code"])&0xFFFFFFFF
+                        if len(db.get_elements(Profile, {"devname": devname, "team": team}))>0:
+                            buffer = buffer%(b'white', b'red', b'You must choose another User Name and Team Name combination.')
+                        elif len(db.get_elements(Profile, {"pid": code}))>0:
+                            buffer = buffer%(b'white', b'red', b'This Friend Code is already used by someone else.')
+                        else:
+                            pf = ProfileChange()
+                            pf.pid = code
+                            pf.team = team
+                            pf.devname = devname
+                            db.insert_elements([pf])
+                            buffer = buffer%(b'black', b'lightblue', b'Successfully registered "%s" "%s" "%s"!'%(bytes(denc["devname"]), bytes(denc["team"]), bytes(denc["code"])))
+                    else:
+                        buffer = buffer%(b'white', b'red', b'Invalid form data')
+                except:
+                    buffer = buffer%(b'white', b'red', b'Invalid form data')
+            else:
+                buffer = buffer%(b'black', b'white', b'')
+            self.send_response(200)
+            self.end_headers()
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(buffer)))
         else:
             self.send_response(404)
             self.end_headers()

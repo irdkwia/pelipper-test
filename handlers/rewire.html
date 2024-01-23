@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <title>RE:EoS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1>RE:WIRE</h1>
+        <p>This form must be used in case you've already been assigned a Friend Code in-game before using this service.</p>
+        <p>To check if you have been assigned a Friend Code go to the Top Menu, then "Others", "Nintendo Wi-Fi Connection", "My Friend Code"</p>
+        <p>This lets you rewire your Friend Code to your new profile on this server if it hasn't been already used.</p>
+        <p>Follow the steps below:</p>
+        <ol>
+            <li>Go to your Nintendo DS settings and change your user name to something unique (best is to fill with random characters)</li>
+            <li>Go to your game and rename your team to something unique (best is to fill with random characters)</li>
+            <li>Put the newly chosen user names and team names</li>
+            <li>Put your assigned Friend Code</li>
+            <li>Submit</li>
+            <li>Connect to the Wi-Fi server (the easiest way is to check SOS Mails on the server)</li>
+            <li>You can now change back your user name and team name to their original settings</li>
+        </ol>
+        <form action="/rewire">
+            <div class="form-group">
+                <div style="color: %s; background-color: %s;">%s</div>
+                <label for="devname">User Name:</label>
+                <input class="form-control" type="text" id="devname" name="devname" placeholder="Toto"/>
+                <label for="team">Team Name:</label>
+                <input class="form-control" type="text" id="team" name="team" placeholder="Pokemones"/>
+                <label for="code">Friend Code:</label>
+                <input class="form-control" aria-describedby="codeHelp" type="text" id="code" name="code" placeholder="012345678901"/>
+                <small id="codeHelp" class="form-text text-muted">Without hyphen (e.g.: 012345678901 for 0123-4567-8901)</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form> 
+    </div>
+</body>
+
+</html>

@@ -64,6 +64,7 @@ class Profile:
         self.email = ""
         self.flags = 0
         self.team = ""
+        self.devname = ""
         self.ccode = 0
         self.scode = 0
         self.unified = 1
@@ -187,4 +188,11 @@ class WMPassList:
     def __init__(self):
         self.wid = 0
         self.data = bytes(17)
+
+class ProfileChange:
+    key = ["pid"]
+    def __init__(self):
+        self.pid = 0
+        self.team = ""
+        self.devname = ""
 
