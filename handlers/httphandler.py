@@ -56,7 +56,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         self.attributes()
         psplit = urlparse(self.path)
         if psplit.path=="/":
-            buffer = b'<html><head><title>RE:EoS</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head><body><div class="container"><h1>No problem here</h1></div></body></html>'
+            buffer = b'<!DOCTYPE html><html><head><title>RE:EoS</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/><meta charset="utf-8"/></head><body><div class="container"><h1>No problem here</h1></div></body></html>'
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -101,7 +101,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             new_path = psplit.path[sid+4:]
             query = parse_qs(psplit.query)
             pid = int(query["pid"][0])
-            prf = db.get_elements(Profile, {"pid": pid})
+            prf = db.get_elements(Profile, {"pid": pid}, limit=1)
             if len(prf)==0:
                 #print("PID Not Found")
                 self.send_response(401)
@@ -151,7 +151,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                 statuscode = 0
                 addstatus = True
                 if new_path in ["/team/teamExist.asp", "/team/teamEntry.asp"]:
-                    td = db.get_elements(TeamData, {"tid": select})
+                    td = db.get_elements(TeamData, {"tid": select}, limit=1)
                     if len(td)>0:
                         td = td[0]
                         buffer += b'\x00\x00\x00\x01'+td.getdata(prf.lang if prf.unified else None)[8:]
@@ -185,7 +185,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     buffer += td.tid.to_bytes(8, 'big')
                     db.insert_elements([td])
                 elif new_path in ["/rescue/rescueExist.asp", "/rescue/rescueEntry.asp"]:
-                    rq = db.get_elements(RescueRequest, {"rid": select, "completed": 0})
+                    rq = db.get_elements(RescueRequest, {"rid": select, "completed": 0}, limit=1)
                     if len(rq)>0:
                         rq = rq[0]
                         if new_path=="/rescue/rescueEntry.asp":
@@ -227,7 +227,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     buffer += rq.rid.to_bytes(8, 'big')
                     db.insert_elements([rq])
                 elif new_path=="/rescue/rescueComplete.asp":
-                    rq = db.get_elements(RescueRequest, {"rid": select})
+                    rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
                     if len(rq)>0:
                         rq = rq[0]
                         rq.completed = 1
@@ -250,7 +250,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     else:
                         statuscode = 1
                 elif new_path=="/rescue/rescueCheck.asp":
-                    aok = db.get_elements(RescueAOK, {"rid": select})
+                    aok = db.get_elements(RescueAOK, {"rid": select}, limit=1)
                     if len(aok)>0:
                         aok = aok[0]
                         buffer += b'\x00\x00\x00\x64'+aok.getdata(prf.lang if prf.unified else None)[8:]
@@ -265,7 +265,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     db.insert_elements([thk])
                     buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/rescue/rescueReceive.asp":
-                    thk = db.get_elements(RescueThanks, {"rid": select})
+                    thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
                     if len(thk)>0:
                         thk = thk[0]
                         if thk.claimed:
@@ -347,22 +347,22 @@ class CustomHandler(BaseHTTPRequestHandler):
                         gbsr = data["gsbrcd"]
                     userid = int(data["userid"])
                     gamecd = data["gamecd"]
-                    elist = db.get_elements(GlobalProfile, {"gbsr": gbsr, "userid": userid})
+                    elist = db.get_elements(GlobalProfile, {"gbsr": gbsr, "userid": userid}, limit=1)
                     if len(elist)>0:
                         if gbsr=="":
-                            if len(db.get_elements(GlobalProfile, {"userid": userid}))>0:
+                            if len(db.get_elements(GlobalProfile, {"userid": userid}, limit=1))>0:
                                 raise ValueError("userid '%d' already exists!"%userid)
                         gprofile = elist[0]
-                        profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
+                        profile = db.get_elements(Profile, {"pid": gprofile.profileid}, limit=1)[0]
                     else:
-                        elist = db.get_elements(GlobalProfile, {"gbsr": "", "userid": userid})
+                        elist = db.get_elements(GlobalProfile, {"gbsr": "", "userid": userid}, limit=1)
                         if len(elist)>0:
                             db.delete_elements(GlobalProfile, {"gbsr": "", "userid": userid})
                             gprofile = elist[0]
                         else:
                             gprofile = GlobalProfile()
                         uid = (int.from_bytes(md5(gbsr.encode('ascii')+data["userid"].encode('ascii')).digest(), 'big')&0x7FFFFFFF)
-                        while len(db.get_elements(ProfileChange, {"pid": uid}))>0 or len(db.get_elements(Profile, {"pid": uid}))>0:
+                        while len(db.get_elements(ProfileChange, {"pid": uid}, limit=1))>0 or len(db.get_elements(Profile, {"pid": uid}, limit=1))>0:
                             uid = ((uid+1)&0x7FFFFFFF)
                         gprofile = GlobalProfile()
                         gprofile._gbsr = gbsr
@@ -377,7 +377,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile.devname = data["devname"]
                         profile.team = data.get("ingamesn", "")
                         if REWIRE:
-                            pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team})
+                            pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team}, limit=1)
                             if len(pf)>0:
                                 pf = pf[0]
                                 db.delete_elements(ProfileChange, {"pid": pf.pid})
@@ -422,7 +422,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             if ctype=="application/x-www-form-urlencoded":
                 data = self.parse_form()
                 db = Connection()
-                elist = db.get_elements(WMGameList, {"passwd": data["passwd"]})
+                elist = db.get_elements(WMGameList, {"passwd": data["passwd"]}, limit=1)
                 if len(elist)==0:
                     self.send_response(404)
                     self.end_headers()
@@ -477,7 +477,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         team = denc["team"][0]
                         if len(denc["code"][0])==14 and denc["code"][0][4]=="-" and denc["code"][0][9]=="-":
                             code = int(denc["code"][0].replace("-", ""))&0xFFFFFFFF
-                            if len(db.get_elements(Profile, {"devname": devname, "team": team}))>0:
+                            if len(db.get_elements(Profile, {"devname": devname, "team": team}, limit=1))>0:
                                 buffer = buffer%(b'white', b'red', b'You must choose another User Name and Team Name combination.')
                             elif len(db.get_elements(Profile, {"pid": code}))>0:
                                 buffer = buffer%(b'white', b'red', b'This Friend Code is already used by someone else.')

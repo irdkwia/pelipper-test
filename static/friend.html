@@ -1,91 +1,87 @@
+<!DOCTYPE html>
 <html>
-
-<head>
-    <title>RE:EoS</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
-        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-</head>
-
-<body>
-    <div class="container">
-        <h1>RE:FRIEND</h1>
-        <p>Friend Codes are dependent on the version and language of your game which means codes are region locked.</p>
-        <p>However, underlying profile are not, which means that knowing your friend's region you can give him the correct variant he needs to link to you.</p>
-        <p>This form lets you know all region variants of a friend code.</p>
-		<div class="form-group">
-			<label for="code">Friend Code:</label>
-			<input class="form-control" type="text" id="code" name="code" placeholder="0123-4567-8901"/>
+	<head>
+		<title>RE:EoS</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/>
+		<meta charset="utf-8"/>
+	</head>
+	<body>
+		<div class="container">
+			<h1>RE:FRIEND</h1>
+			<p>Friend Codes are dependent on the version and language of your game which means codes are region locked.</p>
+			<p>However, underlying profile are not, which means that knowing your friend's region you can give him the correct variant he needs to link to you.</p>
+			<p>This form lets you know all region variants of a friend code.</p>
+			<div class="form-group">
+				<label for="code">Friend Code:</label>
+				<input class="form-control" type="text" id="code" name="code" placeholder="0123-4567-8901"/>
+			</div>
+			<button class="btn btn-primary" onclick="computeCodes();">List</button>
+			<hr/>
+			<div>
+				<h6>Japan: <span id="code0"></span></h6>
+				<h6>English (US): <span id="code1"></span></h6>
+				<h6>English (EU): <span id="code2"></span></h6>
+				<h6>French: <span id="code3"></span></h6>
+				<h6>German: <span id="code4"></span></h6>
+				<h6>Italian: <span id="code5"></span></h6>
+				<h6>Spanish: <span id="code6"></span></h6>
+			<div>
 		</div>
-		<button class="btn btn-primary" onclick="computeCodes();">List</button>
-		<hr/>
-		<div>
-			<h6>Japan: <span id="code0"></span></h6>
-			<h6>English (US): <span id="code1"></span></h6>
-			<h6>English (EU): <span id="code2"></span></h6>
-			<h6>French: <span id="code3"></span></h6>
-			<h6>German: <span id="code4"></span></h6>
-			<h6>Italian: <span id="code5"></span></h6>
-			<h6>Spanish: <span id="code6"></span></h6>
-		<div>
-    </div>
-	<script>
-		const cdlist = ["JYFY", "EYFY", "UYFY", "FYFY", "DYFY", "IYFY", "SYFY"];
-		function createsourcefriend(match) {
-			var source = [];
-			for (var i = 0; i < 256; i++) { 
-				var nb = i;
-				for (var j = 0; j < 8; j++) { 
-					if (nb&0x80) {
-						nb <<= 1;
-						nb ^= match;
-					} else {
-						nb <<= 1;
+		<script>
+			const cdlist = ["JYFY", "EYFY", "UYFY", "FYFY", "DYFY", "IYFY", "SYFY"];
+			function createsourcefriend(match) {
+				var source = [];
+				for (var i = 0; i < 256; i++) { 
+					var nb = i;
+					for (var j = 0; j < 8; j++) { 
+						if (nb&0x80) {
+							nb <<= 1;
+							nb ^= match;
+						} else {
+							nb <<= 1;
+						}
 					}
+					source.push(nb);
 				}
-				source.push(nb);
+				return source;
 			}
-			return source;
-		}
-		const source = createsourcefriend(7);
-	
-		function calcsumfriend(buffer) {
-			var s = 0;
-			for (var i = 0; i < buffer.length; i++) { 
-				s = source[(buffer[i]^s)&0xFF];
-			}
-			return s;
-		}
+			const source = createsourcefriend(7);
 		
-		function computeCodes() {
-			cdlist.forEach((e, i) => {
-				var fid = document.getElementById("code").value;
-				var elt = document.getElementById("code"+i);
-				if (fid.length==14 && fid.charAt(4)=="-" && fid.charAt(9)=="-") {
-					console.log(fid);
-					fid = parseInt(fid.replaceAll("-", ""));
-					console.log(fid);
-					if (isNaN(fid)) {
-						elt.innerHTML = "INVALID";
-					} else {
-						var buffer = [];
-						var n = fid;
-						for (var i = 0; i < 4; i++) { 
-							buffer.push(n&0xFF);
-							n >>= 8;
-						}
-						for (var i = 0; i < 4; i++) { 
-							buffer.push(e.charCodeAt(i));
-						}
-						n = ((calcsumfriend(buffer)&0x7F)*Math.pow(2,32))+(fid%0x100000000);
-						n = String(n).padStart(12, '0');
-						elt.innerHTML = n.substring(0, 4)+"-"+n.substring(4, 8)+"-"+n.substring(8, 12);
-					}
-				} else {
-					elt.innerHTML = "INVALID";
+			function calcsumfriend(buffer) {
+				var s = 0;
+				for (var i = 0; i < buffer.length; i++) { 
+					s = source[(buffer[i]^s)&0xFF];
 				}
-			});
-		}
-	</script>
-</body>
-
+				return s;
+			}
+			
+			function computeCodes() {
+				cdlist.forEach((e, i) => {
+					var fid = document.getElementById("code").value;
+					var elt = document.getElementById("code"+i);
+					if (fid.length==14 && fid.charAt(4)=="-" && fid.charAt(9)=="-") {
+						fid = parseInt(fid.replaceAll("-", ""));
+						if (isNaN(fid)) {
+							elt.innerHTML = "INVALID";
+						} else {
+							var buffer = [];
+							var n = fid;
+							for (var i = 0; i < 4; i++) { 
+								buffer.push(n&0xFF);
+								n >>= 8;
+							}
+							for (var i = 0; i < 4; i++) { 
+								buffer.push(e.charCodeAt(i));
+							}
+							n = ((calcsumfriend(buffer)&0x7F)*Math.pow(2,32))+(fid%0x100000000);
+							n = String(n).padStart(12, '0');
+							elt.innerHTML = n.substring(0, 4)+"-"+n.substring(4, 8)+"-"+n.substring(8, 12);
+						}
+					} else {
+						elt.innerHTML = "INVALID";
+					}
+				});
+			}
+		</script>
+	</body>
 </html>

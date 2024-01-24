@@ -43,7 +43,7 @@ class CustomHandler(BaseRequestHandler):
             data[f] = self.getfield()
             f = self.getfield()
         if action=="login":
-            self.profile = self.db.get_elements(GlobalProfile, {"token": data["authtoken"]})[0]
+            self.profile = self.db.get_elements(GlobalProfile, {"token": data["authtoken"]}, limit=1)[0]
             #print("Log in")
             assert data["response"]==self.challenge(self.profile._challenge, data["authtoken"], data["challenge"], self.mmchal)
             buddylist = [str(b.buddy) for b in self.db.get_elements(BuddyList, {"pid": self.profile.profileid})]
@@ -56,7 +56,7 @@ class CustomHandler(BaseRequestHandler):
             if pid==self.profile.profileid:
                 profile = self.profile
             else:
-                profile = self.db.get_elements(GlobalProfile, {"profileid": pid})[0]
+                profile = self.db.get_elements(GlobalProfile, {"profileid": pid}, limit=1)[0]
             self.sendmessage([("pi", "2")]+[(k, v) for k, v in profile.__dict__.items() if not k.startswith("_")]+[("id", data["id"])])
         elif action=="updatepro":
             #print("Update profile")
@@ -69,8 +69,10 @@ class CustomHandler(BaseRequestHandler):
             buddylist = [str(b.buddy) for b in self.db.get_elements(BuddyList, {"pid": self.profile.profileid})]
         elif action=="addbuddy":
             #print("Add buddy",data["newprofileid"])
-            if len(self.db.get_elements(BuddyList, {"pid": self.profile.profileid, "buddy": int(data["newprofileid"])}))>0:
+            if len(self.db.get_elements(BuddyList, {"pid": self.profile.profileid, "buddy": int(data["newprofileid"])}, limit=1))>0:
                 self.sendmessage([("error", ""),("err", 1539),("errmsg","The profile requested is already a buddy.")])
+            elif len(self.db.get_elements(Profile, {"pid": int(data["newprofileid"])}, limit=1))==0:
+                self.sendmessage([("error", ""),("err", 1539),("errmsg","The profile requested does not exist.")])
             else:
                 pass
                 bd = BuddyList()
