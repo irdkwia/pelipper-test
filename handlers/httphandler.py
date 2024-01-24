@@ -56,16 +56,32 @@ class CustomHandler(BaseHTTPRequestHandler):
         self.attributes()
         psplit = urlparse(self.path)
         if psplit.path=="/":
-            buffer = b'<html><head><title>RE:EoS</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head><body><h1>No problem here</h1></body></html>'
+            buffer = b'<html><head><title>RE:EoS</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"></head><body><div class="container"><h1>No problem here</h1></div></body></html>'
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(buffer)))
             self.wfile.write(buffer)
             return
+        elif psplit.path=="/favicon.ico":
+            with open("static/favicon.ico", 'rb') as file:
+                buffer = file.read()
+            self.send_response(200)
+            self.end_headers()
+            self.send_header("Content-Type", "image/x-icon")
+            self.send_header("Content-Length", str(len(buffer)))
+            self.wfile.write(buffer)
         elif psplit.path=="/rewire":
             with open("static/rewire.html", 'rb') as file:
                 buffer = file.read()%(b'black', b'white', b'')
+            self.send_response(200)
+            self.end_headers()
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", str(len(buffer)))
+            self.wfile.write(buffer)
+        elif psplit.path=="/friend":
+            with open("static/friend.html", 'rb') as file:
+                buffer = file.read()
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -454,18 +470,21 @@ class CustomHandler(BaseHTTPRequestHandler):
                     if "devname" in denc and "team" in denc and "code" in denc:
                         devname = denc["devname"][0]
                         team = denc["team"][0]
-                        code = int(denc["code"][0])&0xFFFFFFFF
-                        if len(db.get_elements(Profile, {"devname": devname, "team": team}))>0:
-                            buffer = buffer%(b'white', b'red', b'You must choose another User Name and Team Name combination.')
-                        elif len(db.get_elements(Profile, {"pid": code}))>0:
-                            buffer = buffer%(b'white', b'red', b'This Friend Code is already used by someone else.')
+                        if len(denc["code"][0])==14 and denc["code"][0][4]=="-" and denc["code"][0][9]=="-":
+                            code = int(denc["code"][0].replace("-", ""))&0xFFFFFFFF
+                            if len(db.get_elements(Profile, {"devname": devname, "team": team}))>0:
+                                buffer = buffer%(b'white', b'red', b'You must choose another User Name and Team Name combination.')
+                            elif len(db.get_elements(Profile, {"pid": code}))>0:
+                                buffer = buffer%(b'white', b'red', b'This Friend Code is already used by someone else.')
+                            else:
+                                pf = ProfileChange()
+                                pf.pid = code
+                                pf.team = team
+                                pf.devname = devname
+                                db.insert_elements([pf])
+                                buffer = buffer%(b'black', b'lightblue', b'Successfully registered "%s" "%s" "%s"!'%(html.escape(devname).encode("utf-8"), html.escape(team).encode("utf-8"), html.escape(denc["code"][0]).encode("utf-8")))
                         else:
-                            pf = ProfileChange()
-                            pf.pid = code
-                            pf.team = team
-                            pf.devname = devname
-                            db.insert_elements([pf])
-                            buffer = buffer%(b'black', b'lightblue', b'Successfully registered "%s" "%s" "%s"!'%(html.escape(devname).encode("utf-8"), html.escape(team).encode("utf-8"), html.escape(denc["code"][0]).encode("utf-8")))
+                            buffer = buffer%(b'white', b'red', b'Invalid Friend Code format')
                     else:
                         buffer = buffer%(b'white', b'red', b'Invalid form data')
                 except:
