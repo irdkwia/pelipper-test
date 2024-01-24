@@ -318,39 +318,41 @@ class CustomHandler(BaseHTTPRequestHandler):
             ctype = self.headers.get('content-type')
             if ctype=="application/x-www-form-urlencoded":
                 data = self.parse_form()
-                if data["action"]=="acctcreate":
-                    res = dict()
-                    res["returncd"] = "001" #MAX 3
-                    res["token"] = "" #MAX 300
-                    res["locator"] = "myserver.com" #MAX 50
-                    res["challenge"] = "" #MAX 8
-                    res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
-                    self.send_form(res)
-                elif data["action"]=="login":
+                if data["action"] in ["acctcreate", "login"]:
                     db = Connection()
                     res = dict()
-                    gbsr = data["gsbrcd"]
+                    if data["action"]=="acctcreate":
+                        gbsr = ""
+                    else:
+                        gbsr = data["gsbrcd"]
+                    userid = int(data["userid"])
                     gamecd = data["gamecd"]
-                    elist = db.get_elements(GlobalProfile, {"gbsr": gbsr})
+                    elist = db.get_elements(GlobalProfile, {"gbsr": gbsr, "userid": userid})
                     if len(elist)>0:
                         gprofile = elist[0]
                         profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
                     else:
-                        uid = (int.from_bytes(md5(gbsr.encode('ascii')).digest(), 'big')&0x3FFFFFFF)|0x40000000
+                        elist = db.get_elements(GlobalProfile, {"gbsr": "", "userid": userid})
+                        if len(elist)>0:
+                            db.delete_elements(GlobalProfile, {"gbsr": "", "userid": userid})
+                            gprofile = elist[0]
+                        else:
+                            gprofile = GlobalProfile()
+                        uid = (int.from_bytes(md5(gbsr.encode('ascii')+data["userid"].encode('ascii')).digest(), 'big')&0x7FFFFFFF)
                         while len(db.get_elements(ProfileChange, {"pid", uid}))>0 or len(db.get_elements(Profile, {"pid", uid}))>0:
-                            uid = ((uid+1)&0x3FFFFFFF)|0x40000000
+                            uid = ((uid+1)&0x7FFFFFFF)
                         gprofile = GlobalProfile()
                         gprofile._gbsr = gbsr
                         gprofile.game = gamecd
-                        gprofile.userid = uid
+                        gprofile.userid = userid
                         gprofile.uniquenick = gbsr
                         gprofile.profileid = uid
                         profile = Profile()
                         profile.pid = uid
                         db.insert_elements([gprofile, profile])
-                    if profile.devname != data["devname"] or profile.team != data["ingamesn"]:
+                    if profile.devname != data["devname"] or profile.team != data.get("ingamesn", ""):
                         profile.devname = data["devname"]
-                        profile.team = data["ingamesn"]
+                        profile.team = data.get("ingamesn", "")
                         pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team})
                         if len(pf)>0:
                             pf = pf[0]

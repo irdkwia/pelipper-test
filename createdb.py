@@ -17,9 +17,9 @@ for prefix in listprefix:
             CREATE TABLE globalprofile (
                 token TEXT UNIQUE,
                 challenge TEXT,
-                gbsr TEXT NOT NULL PRIMARY KEY,
+                gbsr TEXT NOT NULL,
                 game TEXT NOT NULL,
-                userid INTEGER NOT NULL UNIQUE,
+                userid INTEGER NOT NULL,
                 profileid INTEGER NOT NULL UNIQUE,
                 nick TEXT,
                 uniquenick TEXT,
@@ -46,7 +46,8 @@ for prefix in listprefix:
                 o1 TEXT,
                 conn TEXT,
                 sig TEXT,
-                udate INTEGER NOT NULL
+                udate INTEGER NOT NULL,
+                PRIMARY KEY("gbsr","userid")
             )
         """)
 

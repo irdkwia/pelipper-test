@@ -19,7 +19,7 @@ def parse(b, l):
 
 
 class GlobalProfile:
-    key = ["gbsr"]
+    key = ["gbsr", "userid"]
     def __init__(self):
         self._token = None
         self._challenge = None

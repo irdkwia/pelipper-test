@@ -40,8 +40,27 @@ def createsource(match):
         source.append(nb)
     return source
 
+def createsourcefriend(match):
+    source = []
+    for i in range(256):
+        nb = i
+        for j in range(8):
+            if nb&0x80:
+                nb <<= 1
+                nb ^= match
+            else:
+                nb <<= 1
+        source.append(nb)
+    return source
+
 def calcsum(source, buffer):
-    sum = 0xFFFFFFFF;
+    s = 0xFFFFFFFF;
     for b in buffer:
-        sum = source[(b^sum)&0xFF]^(sum>>8)
-    return sum^0xFFFFFFFF
+        s = source[(b^s)&0xFF]^(s>>8)
+    return s^0xFFFFFFFF
+
+def calcsumfriend(source, buffer):
+    s = 0;
+    for b in buffer:
+        s = source[(b^s)&0xFF]
+    return s
