@@ -71,7 +71,8 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "image/x-icon")
             self.send_header("Content-Length", str(len(buffer)))
             self.wfile.write(buffer)
-        elif psplit.path=="/rewire":
+            return
+        elif psplit.path=="/rewire" and REWIRE:
             with open("static/rewire.html", 'rb') as file:
                 buffer = file.read()%(b'black', b'white', b'')
             self.send_response(200)
@@ -79,6 +80,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(buffer)))
             self.wfile.write(buffer)
+            return
         elif psplit.path=="/friend":
             with open("static/friend.html", 'rb') as file:
                 buffer = file.read()
@@ -87,6 +89,8 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", str(len(buffer)))
             self.wfile.write(buffer)
+            return
+            
         sid = psplit.path.find("/", 1)
         if sid!=-1 and psplit.path[sid:].startswith("/web"):
             self.upgrade11()
@@ -372,16 +376,17 @@ class CustomHandler(BaseHTTPRequestHandler):
                     if profile.devname != data["devname"] or profile.team != data.get("ingamesn", ""):
                         profile.devname = data["devname"]
                         profile.team = data.get("ingamesn", "")
-                        pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team})
-                        if len(pf)>0:
-                            pf = pf[0]
-                            db.delete_elements(ProfileChange, {"pid": pf.pid})
-                            db.delete_elements(Profile, {"pid": profile.pid})
-                            db.delete_elements(GlobalProfile, {"gbsr": gprofile._gbsr})
-                            gprofile.userid = pf.pid
-                            gprofile.profileid = pf.pid
-                            profile.pid = pf.pid
-                            db.insert_elements([gprofile, profile])
+                        if REWIRE:
+                            pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team})
+                            if len(pf)>0:
+                                pf = pf[0]
+                                db.delete_elements(ProfileChange, {"pid": pf.pid})
+                                db.delete_elements(Profile, {"pid": profile.pid})
+                                db.delete_elements(GlobalProfile, {"gbsr": gprofile._gbsr})
+                                gprofile.userid = pf.pid
+                                gprofile.profileid = pf.pid
+                                profile.pid = pf.pid
+                                db.insert_elements([gprofile, profile])
                     if gamecd in ["C2SE", "C2SP", "C2SJ"]:
                         profile.game = GAME_SKY
                     elif gamecd in ["YFYE", "YFYP", "YFYJ"]:
@@ -458,7 +463,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
-        elif psplit.path=="/rewire":
+        elif psplit.path=="/rewire" and REWIRE:
             with open("static/rewire.html", 'rb') as file:
                 buffer = file.read()
             ctype = self.headers.get('content-type')

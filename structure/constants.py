@@ -4,6 +4,7 @@ GAME_SKY = 2
 
 UNIFIED_TABLES = ["globalprofile", "profile", "buddylist", "wmgamelist", "profilechange"]
 
+REWIRE = True
 SALT = b'TXqjDDOLhPySKSztgBHY'
 CHECKMASK = 0x613c4964
 BASEGAME = 'pokedungeonds'
