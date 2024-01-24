@@ -329,6 +329,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                     gamecd = data["gamecd"]
                     elist = db.get_elements(GlobalProfile, {"gbsr": gbsr, "userid": userid})
                     if len(elist)>0:
+                        if gbsr=="":
+                            if len(db.get_elements(GlobalProfile, {"userid": userid}))>0:
+                                raise ValueError("userid '%d' already exists!"%userid)
                         gprofile = elist[0]
                         profile = db.get_elements(Profile, {"pid": gprofile.profileid})[0]
                     else:
@@ -339,7 +342,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         else:
                             gprofile = GlobalProfile()
                         uid = (int.from_bytes(md5(gbsr.encode('ascii')+data["userid"].encode('ascii')).digest(), 'big')&0x7FFFFFFF)
-                        while len(db.get_elements(ProfileChange, {"pid", uid}))>0 or len(db.get_elements(Profile, {"pid", uid}))>0:
+                        while len(db.get_elements(ProfileChange, {"pid": uid}))>0 or len(db.get_elements(Profile, {"pid": uid}))>0:
                             uid = ((uid+1)&0x7FFFFFFF)
                         gprofile = GlobalProfile()
                         gprofile._gbsr = gbsr
