@@ -56,7 +56,8 @@ class CustomHandler(BaseHTTPRequestHandler):
         self.attributes()
         psplit = urlparse(self.path)
         if psplit.path=="/":
-            buffer = b'<!DOCTYPE html><html><head><title>RE:EoS</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/><meta charset="utf-8"/></head><body><div class="container"><h1>No problem here</h1></div></body></html>'
+            with open("static/index.html", 'rb') as file:
+                buffer = file.read()
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -144,7 +145,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                 data = data[12:]
                 if CAPTURE:
                     #print("SELECT: %016X"%select)
-                    with open("capture/"+new_path.replace("/", "_").replace(".", "_")+"_"+datetime.utcnow().strftime("%Y%m%d%H%M%S")+".bin", 'wb') as file:
+                    datecapture = datetime.utcnow()
+                    with open("capture/"+new_path.replace("/", "_").replace(".", "_")+"_"+datecapture.strftime("%Y%m%d%H%M%S")+"_in.bin", 'wb') as file:
                         file.write(data)
 
                 buffer = bytearray()
@@ -314,6 +316,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                     return 
                 if addstatus:
                     buffer = bytearray(statuscode.to_bytes(4, 'big'))+buffer
+                if CAPTURE:
+                    datecapture = datetime.utcnow()
+                    with open("capture/"+new_path.replace("/", "_").replace(".", "_")+"_"+datecapture.strftime("%Y%m%d%H%M%S")+"_out.bin", 'wb') as file:
+                        file.write(buffer)
                 buffer += self.conndigest(b64encode(buffer).decode("ascii").translate(str.maketrans({'+': '-', '/': '_'})).encode("ascii"), True).encode("ascii")
                 db.update_elements([prf])
                 self.send_response(200)
