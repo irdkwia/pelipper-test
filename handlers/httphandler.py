@@ -152,6 +152,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                 buffer = bytearray()
                 statuscode = 0
                 addstatus = True
+                adddigest = True
                 if new_path in ["/team/teamExist.asp", "/team/teamEntry.asp"]:
                     td = db.get_elements(TeamData, {"tid": select}, limit=1)
                     if len(td)>0:
@@ -297,6 +298,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         prf.scode = 0
                         if pid in TEMP_CHANGE:
                             del TEMP_CHANGE[pid]
+                        buffer += b'\x00\x00\x00\x01'
                     elif pid in TEMP_CHANGE:
                         if TEMP_CHANGE[pid][0]!=email or TEMP_CHANGE[pid][1]!=scode:
                             buffer += b'\x00\x00\x00\x01'
@@ -310,17 +312,20 @@ class CustomHandler(BaseHTTPRequestHandler):
                             prf.ccode = ccode
                             prf.scode = scode
                             del TEMP_CHANGE[pid]
+                    else:
+                        buffer += b'\x00\x00\x00\x01'
                 else:
                     self.send_response(204)
                     self.end_headers()
-                    return 
+                    return
                 if addstatus:
                     buffer = bytearray(statuscode.to_bytes(4, 'big'))+buffer
+                if adddigest:
+                    buffer += self.conndigest(b64encode(buffer).decode("ascii").translate(str.maketrans({'+': '-', '/': '_'})).encode("ascii"), True).encode("ascii")
                 if CAPTURE:
                     datecapture = datetime.utcnow()
                     with open("capture/"+new_path.replace("/", "_").replace(".", "_")+"_"+datecapture.strftime("%Y%m%d%H%M%S")+"_out.bin", 'wb') as file:
                         file.write(buffer)
-                buffer += self.conndigest(b64encode(buffer).decode("ascii").translate(str.maketrans({'+': '-', '/': '_'})).encode("ascii"), True).encode("ascii")
                 db.update_elements([prf])
                 self.send_response(200)
                 self.send_header("Content-Length", str(len(buffer)))
@@ -389,7 +394,6 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 db.delete_elements(ProfileChange, {"pid": pf.pid})
                                 db.delete_elements(Profile, {"pid": profile.pid})
                                 db.delete_elements(GlobalProfile, {"gbsr": gprofile._gbsr})
-                                gprofile.userid = pf.pid
                                 gprofile.profileid = pf.pid
                                 profile.pid = pf.pid
                                 db.insert_elements([gprofile, profile])
