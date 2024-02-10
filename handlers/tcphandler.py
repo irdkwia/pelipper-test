@@ -23,7 +23,7 @@ class CustomHandler(BaseRequestHandler):
             if isinstance(k, str):
                 k = k.encode("ascii")
             if isinstance(v, int):
-                v = str(v)
+                v = str(v&0x7FFFFFFF) # Force 32-bit unsigned
             if isinstance(v, str):
                 v = v.encode("ascii")
             self.request.send(b"\\")
