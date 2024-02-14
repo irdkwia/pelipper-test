@@ -182,12 +182,14 @@ class WMGameList:
         self.passwd = ""
         self.prefix = ""
         self.lang = ""
+        self.version = GAME_SKY
 
 class WMPassList:
     key = ["passwd"]
     def __init__(self):
         self.wid = 0
         self.data = bytes(17)
+        self.version = GAME_SKY
 
 class ProfileChange:
     key = ["pid"]

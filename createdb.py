@@ -83,6 +83,7 @@ for prefix in listprefix:
                 passwd TEXT NOT NULL PRIMARY KEY,
                 prefix TEXT NOT NULL,
                 lang TEXT NOT NULL,
+                version INTEGER NOT NULL,
                 udate INTEGER NOT NULL
             )
         """)
@@ -166,6 +167,7 @@ for prefix in listprefix:
         CREATE TABLE %swmpasslist (
             wid INTEGER NOT NULL PRIMARY KEY,
             data BLOB NOT NULL,
+            version INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
     """ % prefix)

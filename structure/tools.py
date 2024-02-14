@@ -59,6 +59,12 @@ def calcsum(source, buffer):
         s = source[(b^s)&0xFF]^(s>>8)
     return s^0xFFFFFFFF
 
+def calcsumsimple(buffer):
+    s = 0
+    for x in range(0,len(buffer),4):
+        s += int.from_bytes(buffer[x:x+4], 'little')
+    return s&0xFFFFFFFF
+
 def calcsumfriend(source, buffer):
     s = 0;
     for b in buffer:

@@ -433,6 +433,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                 data = self.parse_form()
                 db = Connection()
                 elist = db.get_elements(WMGameList, {"passwd": data["passwd"]}, limit=1)
+                repllang = None
+                if "attr1" in data:
+                    repllang = LANGTOID.get(data["attr1"], None)
                 if len(elist)==0:
                     self.send_response(404)
                     self.end_headers()
@@ -441,11 +444,11 @@ class CustomHandler(BaseHTTPRequestHandler):
                     db = Connection(None if wgame.prefix==BASEGAME else wgame.prefix)
                     buffer = bytearray()
                     if data["action"]=="count":
-                        wmlist = db.get_elements(WMPassList)
+                        wmlist = db.get_elements(WMPassList, {"version": wgame.version})
                         buffer += str(len(wmlist)*len(wgame.lang.split(","))).encode("ascii")
                     elif data["action"]=="list":
-                        wmlist = db.get_elements(WMPassList)
-                        llist = [int(x) for x in wgame.lang.split(",")]
+                        wmlist = db.get_elements(WMPassList, {"version": wgame.version})
+                        llist = [int(x) for x in wgame.lang.split(",")] if repllang is None else [repllang]
                         # ID    BUFFER  NAME  NAME  NAME    NB
                         for wm in wmlist:
                             for l in llist:
@@ -456,9 +459,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                             element = bytes(0)
                         else:
                             element = wmlist[0].data
-                        buffer += (0x50443357).to_bytes(4, 'little')
-                        buffer += (0x08261522).to_bytes(4, 'little')
-                        buffer += calcsum(SOURCE_WM, element).to_bytes(4, 'little')
+                        buffer += (0x50443357 if wgame.version==GAME_SKY else 0x50443257).to_bytes(4, 'little')
+                        buffer += (0x08261522 if wgame.version==GAME_SKY else 0x07070419).to_bytes(4, 'little')
+                        buffer += (calcsum(SOURCE_WM, element) if wgame.version==GAME_SKY else calcsumsimple(element)).to_bytes(4, 'little')
                         # LANG
                         buffer += (int(data["contents"])%10).to_bytes(4, 'little')
                         buffer += bytes(0x10)
