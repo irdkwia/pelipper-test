@@ -92,7 +92,7 @@ class CustomHandler(BaseRequestHandler):
         if msgtype==0:
             return 0, b''
         if val(self.request.recv(2))!=0x300:
-            raise Exception("Invalid SSL version")
+            return 0, b''
         length = val(self.request.recv(2))
         data = bytearray()
         while len(data)<length:
@@ -149,10 +149,10 @@ class CustomHandler(BaseRequestHandler):
             handshaketype = data[0]
             length = val(data[1:4])
             if length!=len(data)-4:
-                raise Exception(len(data)-4, length, data[4:])
+                return False
             if handshaketype==1:
                 if val(data[4:6])!=0x300:
-                    raise Exception("Invalid SSL version (2)")
+                    return False
                 self.clientrand = data[6:38]
                 ssid_len = data[38]
                 ssid = data[39:39+ssid_len]
@@ -161,7 +161,7 @@ class CustomHandler(BaseRequestHandler):
                 methods_len = data[39+ssid_len+2+suites_len]
                 methods = parse(data[39+ssid_len+2+suites_len+1:39+ssid_len+2+suites_len+1+methods_len], 1)
                 if 0 not in methods and 5 not in suites:
-                    raise Exception("Invalid client specs")
+                    return False
                 self.sendhello()
                 self.sendcert()
                 self.sendhellodone()
@@ -181,13 +181,15 @@ class CustomHandler(BaseRequestHandler):
                 ref_sha1 = data[20:40]
                 md5_hash = md5(self.master + b'\\'*48 + md5(bytes(self.hchkall) + b'CLNT' + self.master + b'6'*48).digest()).digest()
                 sha1_hash = sha1(self.master + b'\\'*40 + sha1(bytes(self.hchkall) + b'CLNT' + self.master + b'6'*40).digest()).digest()
-                assert ref_md5==md5_hash and ref_sha1==sha1_hash
+                if ref_md5!=md5_hash or ref_sha1!=sha1_hash:
+                    return False
                 self.sendmessage(b'\x01', 0x14)
                 self.sendseq = 0
                 self.sciphering = True
                 self.sendfinished(orgdata)
             else:
                 print("Cannot resolve handshaketype", handshaketype, data[4:])
+                return False
             self.hchkall += orgdata
             self.hchkall += self.hchksent
         elif msgtype==0x17:
@@ -202,19 +204,23 @@ class CustomHandler(BaseRequestHandler):
             return False
         else:
             print("Unk Specs", msgtype, data)
+            return False
         return True
     "One instance per connection.  Override handle(self) to customize action."
     def handle(self):
         self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.underlying.connect((SERVER_ADDR, 80))
-        self.hchkall = bytearray()
-        self.sciphering = False
-        self.cciphering = False
-        self.recvseq = 0
-        self.sendseq = 0
-        # self.request is the client connection
-        while self.parsemessage():
-            pass
+        try:
+            self.hchkall = bytearray()
+            self.sciphering = False
+            self.cciphering = False
+            self.recvseq = 0
+            self.sendseq = 0
+            # self.request is the client connection
+            while self.parsemessage():
+                pass
+        except Exception as e:
+            print(e)
         self.underlying.close()
 
 shttpserv = TCPServer((SERVER_ADDR, 443), CustomHandler)
