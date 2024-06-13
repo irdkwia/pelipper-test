@@ -224,6 +224,7 @@ class CustomHandler(BaseRequestHandler):
         self.underlying.close()
 
 shttpserv = TCPServer((SERVER_ADDR, 443), CustomHandler)
+shttpserv.timeout = 5
 
 print("Starting HTTPS server...")
 shttpserv.serve_forever()
