@@ -11,9 +11,9 @@ BASEGAME = 'pokedungeonds'
 
 TOKENPOOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-SERVER_ADDR = "192.168.56.1"
-SERVER_ADDR_PUBLIC_1 = "192.168.56.1" # Change this to your server public address
-SERVER_ADDR_PUBLIC_2 = "192.168.56.1" # Change this to your server public address
+SERVER_ADDR = "192.168.188.126"
+SERVER_ADDR_PUBLIC_1 = "192.168.188.126" # Change this to your server public address
+SERVER_ADDR_PUBLIC_2 = "192.168.188.126" # Change this to your server public address
 
 RESOLVER = {
     "conntest.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
@@ -34,6 +34,11 @@ LANGTOID = {
     "italian": 4,
     "spanish": 5
 }
+
+# Enter an optional Discord bot token here
+DISCORD_TOKEN = None
+# A channel ID to post SOS mail to, or `None` if no updates should be posted
+DISCORD_UPDATE_CHANNEL_ID = None
 
 # MAILTY MISSIONTYPE MISSIONSPEC CLIENT TARGET TGITEM RWDTYPE RWDITEM RSTTYPE RSTARG FLVTEXT DUN FLOOR
 MISSION_FIELDS = [4,4,4,11,11,10,4,11,1,11,24,8,8]
