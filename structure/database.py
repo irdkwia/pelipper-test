@@ -112,6 +112,27 @@ class Connection:
         con.close()
         return lst
     
+    def count_elements(self, cls, conditions=None):
+        con = self.connect()
+        cur = con.cursor()
+        uniname = self.unifiedname(cls.__name__)
+        query = "SELECT COUNT(*) FROM %s" % (uniname)
+        pf = ""
+
+        totalcond = []
+        d = dict()
+        if conditions is not None:
+            totalcond.extend(pf+"%s=:%s" % (k, k) for k in conditions)
+            d.update(conditions)
+        if len(totalcond)>0:
+            query += " WHERE %s" % (" AND ".join(totalcond))
+        cur.execute(query, d)
+        
+        count = cur.fetchone()[0]
+
+        con.close()
+        return count
+    
     def delete_elements(self, cls, conditions):
         con = self.connect()
         cur = con.cursor()

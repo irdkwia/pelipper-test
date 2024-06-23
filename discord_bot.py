@@ -33,13 +33,7 @@ async def notify_rescue(username_or_id: Optional[str], team: str, title: str, me
 
     embed = discord.Embed(title=f"New SOS Mail", description=description, color=0xff0000)
     embed.add_field(name="Team Name", value=team, inline=False)
-
-    dungeon = f"Unknown dungeon #{dungeon_id}"
-    if dungeon_id >= 0 and dungeon_id < len(base_game_constants.DUNGEONS):
-        dungeon = f"{base_game_constants.DUNGEONS[dungeon_id]}"
-    
-    embed.add_field(name="Dungeon", value=dungeon, inline=True)
-    embed.add_field(name="Floor", value=str(floor), inline=True)
+    embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor), inline=False)
     if title:
         embed.add_field(name="Title", value=title, inline=False)
     if message:
@@ -52,13 +46,7 @@ async def notify_rescue(username_or_id: Optional[str], team: str, title: str, me
 async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id: Optional[str], rescued_team: str, rescuer_team: str, title: str, message: str, dungeon_id: int, floor: int):
     def apply_embed_fields(embed: discord.Embed):
         embed.add_field(name="Team Name", value=rescuer_team, inline=False)
-
-        dungeon = f"Unknown dungeon #{dungeon_id}"
-        if dungeon_id >= 0 and dungeon_id < len(base_game_constants.DUNGEONS):
-            dungeon = f"{base_game_constants.DUNGEONS[dungeon_id]}"
-        
-        embed.add_field(name="Dungeon", value=dungeon, inline=True)
-        embed.add_field(name="Floor", value=str(floor), inline=True)
+        embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor), inline=False)
         if title:
             embed.add_field(name="Title", value=title, inline=False)
         if message:

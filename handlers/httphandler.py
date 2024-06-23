@@ -7,6 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from datetime import datetime
 from hashlib import sha1
 import discord_bot
+from structure import constants, base_game_constants
 
 from structure.database import *
 from structure.tools import *
@@ -57,8 +58,13 @@ class CustomHandler(BaseHTTPRequestHandler):
         self.attributes()
         psplit = urlparse(self.path)
         if psplit.path=="/":
-            with open("static/index.html", 'rb') as file:
-                buffer = file.read()
+            if self.headers.get("host") == "conntest.nintendowifi.net":
+                # Return a simple page if accessed from Nintendo DS
+                with open("static/index.html", 'rb') as file:
+                    buffer = file.read()
+            else:
+                buffer = self.render_index_page()
+
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -574,3 +580,115 @@ class CustomHandler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
+
+    def render_index_page(self):
+        db = Connection()
+
+        # TODO: cache statistics for future accesses (it should be enough to update them every few seconds or so)
+        profile_count = db.count_elements(Profile)
+        sos_mail_count = db.count_elements(RescueRequest)
+        aok_mail_count = db.count_elements(RescueAOK)
+        thank_you_mail_count = db.count_elements(RescueThanks)
+        wonder_mail_count = db.count_elements(WMPassList)
+        trade_team_count = db.count_elements(TeamData)
+
+        limit = 200
+        open_rescues = db.get_elements(RescueRequest, {"completed": 0}, ordering=["udate DESC"], limit=limit)
+        open_rescues_count = str(len(open_rescues))
+        if open_rescues_count == limit:
+            open_rescues_count += "+"
+
+        rescue_cards = []
+        for rq in open_rescues:
+            if rq.game == 0:
+                game = "Time"
+            elif rq.game == 1:
+                game = "Darkness"
+            else:
+                game = "Sky"
+
+            title = rq.title
+            if not title:
+                title = f"SOS Mail from {rq.team}"
+            message = rq.message
+            if not message:
+                message = "We were defeated! Please help!"
+
+            rescue_cards.append(f"""
+<div class="card bg-light">
+<div class="card-body">
+    <h5 class="card-title">{title}</h5>
+    <h6 class="card-subtitle mb-2 text-muted">{base_game_constants.format_floor(rq.dungeon, rq.floor)}</h6>
+    <p class="card-text mt-1 mb-1"><b>Client:</b> {rq.team} (<i>{game}</i>)</p>
+    <blockquote class="card-text mt-1 text-muted">"{message}"</blockquote>
+</div>
+</div>
+""")
+
+        buffer = f"""<html>
+    <head>
+        <title>RE:EoS</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/>
+		<meta charset="utf-8"/>
+        <style>
+            body {{
+                margin: 20px;
+            }}
+
+            .rescues {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }}
+
+            @media (max-width: 600px) {{
+                .rescues {{
+                    grid-template-columns: 1fr;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+			<h1>Pokémon Mystery Dungeon Wi-Fi Connection Server</h1>
+            <div class="card mt-3 mb-3">
+                <div class="card-body">
+                    <b>DNS server address</b>: <code>{constants.SERVER_ADDR}</code>
+                </div>
+            </div>
+            
+            <p>
+                This server allows you to use discontinued online features of <i>Pokémon Mystery Dungeon: Explorers of Time</i>,
+                <i>Explorers of Darkness</i> and <i>Explorers of Sky</i>.
+            </p>
+            <p>
+                Refer to <a href="https://wiki.skytemple.org/index.php/How_to_connect_to_custom_Wi-Fi_Connection_Servers">this guide on the SkyTemple Wiki</a>
+                to learn how to connect your Nintendo DS or emulator.
+            </p>
+
+            <h2>Waiting for Rescue</h2>
+            <p>There are <b>{open_rescues_count}</b> open rescue requests.</p>
+            <div class="rescues mb-3">
+                {'\n'.join(rescue_cards)}
+            </div>
+
+            <h2>Statistics</h2>
+            <ul>
+                <li><b>{profile_count}</b> total users</li>
+                <li>Sent <b>{sos_mail_count}</b> SOS mails in total</li>
+                <li>Sent <b>{aok_mail_count}</b> A-OK mails in total</li>
+                <li>Sent <b>{thank_you_mail_count}</b> Thank-You mails in total</li>
+                <li>Serving <b>{wonder_mail_count}</b> Wonder Mails</li>
+                <li>Serving <b>{trade_team_count}</b> Trade Teams</li>
+            </ul>
+
+            <h2>Utilities</h2>
+            <ul>
+                <li><a href="/friend">Friend Code region converter</a></li>
+                {'<li><a href="/rewire">Profile migration tool</a></li>' if REWIRE else ''}
+            </ul>
+		</div>
+    </body>
+</html>
+"""
+        return buffer.encode("utf-8")
