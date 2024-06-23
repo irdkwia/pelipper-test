@@ -593,7 +593,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         trade_team_count = db.count_elements(TeamData)
 
         limit = 200
-        open_rescues = db.get_elements(RescueRequest, {"completed": 0}, ordering=["udate DESC"], limit=limit)
+        open_rescues = db.get_elements(RescueRequest, {"completed": 0, "private": 0}, ordering=["udate DESC"], limit=limit)
         open_rescues_count = str(len(open_rescues))
         if open_rescues_count == limit:
             open_rescues_count += "+"
@@ -614,11 +614,15 @@ class CustomHandler(BaseHTTPRequestHandler):
             if not message:
                 message = "We were defeated! Please help!"
 
+            rid_str = f"{rq.rid:012d}"
+            code = f"{rid_str[:4]}-{rid_str[4:8]}-{rid_str[8:]}"
+
             rescue_cards.append(f"""
 <div class="card bg-light">
 <div class="card-body">
     <h5 class="card-title">{title}</h5>
     <h6 class="card-subtitle mb-2 text-muted">{base_game_constants.format_floor(rq.dungeon, rq.floor)}</h6>
+    <p class="card-text mt-1 mb-1"><b>Rescue Number:</b> {code}</p>
     <p class="card-text mt-1 mb-1"><b>Client:</b> {rq.team} (<i>{game}</i>)</p>
     <blockquote class="card-text mt-1 text-muted">"{message}"</blockquote>
 </div>
