@@ -136,6 +136,7 @@ class RescueAOK:
         self.team = ""
         self.title = ""
         self.message = ""
+        self.rescuerpid = 0
 
     def getdata(self, langtarget):
         subbuffer = bytearray(260)

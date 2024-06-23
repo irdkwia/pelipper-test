@@ -1,11 +1,12 @@
+import asyncio
 import html
 from http.server import BaseHTTPRequestHandler
 from random import randrange, choice
 from base64 import b64decode, b64encode
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime
-import time
 from hashlib import sha1
+import discord_bot
 
 from structure.database import *
 from structure.tools import *
@@ -229,6 +230,13 @@ class CustomHandler(BaseHTTPRequestHandler):
                     rq.message = data[68:140].decode("utf-16-be").replace('\x00', '')
                     buffer += rq.rid.to_bytes(8, 'big')
                     db.insert_elements([rq])
+
+                    if discord_bot.enabled:
+                        rescued_user_name = None
+                        if not '@' in prf.email and prf.scode: # Discord user name/ID
+                            rescued_user_name = prf.email
+                        asyncio.run_coroutine_threadsafe(discord_bot.notify_rescue(rescued_user_name, rq.team, rq.title, rq.message, rq.dungeon, rq.floor), discord_bot.bot.loop)
+
                 elif new_path=="/rescue/rescueComplete.asp":
                     rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
                     if len(rq)>0:
@@ -244,10 +252,26 @@ class CustomHandler(BaseHTTPRequestHandler):
                             aok.team = prf.team
                             aok.game = prf.game
                             aok.lang = prf.lang
+                            aok.rescuerpid = prf.pid
                             aok.title = data[92:128].decode("utf-16-be").replace('\x00', '')
                             aok.message = data[128:200].decode("utf-16-be").replace('\x00', '')
                             db.insert_elements([aok])
                             buffer += b'\x00\x00\x00\x01'
+
+                            if discord_bot.enabled:
+                                rescued_prf = db.get_elements(Profile, {"pid": rq.pid}, limit=1)
+                                if len(rescued_prf)>0:
+                                    rescued_prf = rescued_prf[0]
+
+                                    rescued_user_name = None
+                                    if not '@' in rescued_prf.email and rescued_prf.scode: # Discord user name/ID
+                                        rescued_user_name = rescued_prf.email
+
+                                    rescuer_user_name = None
+                                    if not '@' in prf.email and prf.scode: # Discord user name/ID
+                                        rescuer_user_name = prf.email
+
+                                    asyncio.run_coroutine_threadsafe(discord_bot.send_aok(rescued_user_name, rescuer_user_name, rq.team, aok.team, aok.title, aok.message, rq.dungeon, rq.floor), discord_bot.bot.loop)
                         else:
                             buffer += b'\x00\x00\x00\x00'
                     else:
@@ -266,7 +290,20 @@ class CustomHandler(BaseHTTPRequestHandler):
                     thk.title = data[4:40].decode("utf-16-be").replace('\x00', '')
                     thk.message = data[40:112].decode("utf-16-be").replace('\x00', '')
                     db.insert_elements([thk])
+
                     buffer += b'\x00\x00\x00\x00'
+
+                    if discord_bot.enabled:
+                        aok = db.get_elements(RescueAOK, {"rid": select}, limit=1)
+
+                        if len(aok)>0:
+                            aok = aok[0]
+                            rescuer_prf = db.get_elements(Profile, {"pid": aok.rescuerpid}, limit=1)
+                            if len(rescuer_prf)>0:
+                                rescuer_prf = rescuer_prf[0]
+                                if not '@' in rescuer_prf.email and rescuer_prf.scode: # Discord user name/ID
+                                    asyncio.run_coroutine_threadsafe(discord_bot.send_thank_you(rescuer_prf.email, thk.title, thk.message), discord_bot.bot.loop)
+
                 elif new_path=="/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
                     if len(thk)>0:
@@ -286,12 +323,32 @@ class CustomHandler(BaseHTTPRequestHandler):
                     email = data[:0x38].decode("ascii").replace('\x00', '')
                     scode = int.from_bytes(data[0x52:0x54], 'big')
                     if scode==0xFFFF:
-                        # Disallow e-mails
-                        buffer += b'\x00\x00\x00\x00'
-                        #buffer += b'\x00\x00\x00\x01'
-                        #scode = randrange(9999)+1
-                        #print("Code: %03d-%04d"%(ccode,scode))
-                        #TEMP_CHANGE[pid] = [email, scode, 0]
+                        success = False
+
+                        if discord_bot.enabled and not '@' in email:
+                            # If the entered email is not a real email address, treat it as a Discord ID/user name
+                            scode = randrange(9999)+1
+                            full_code = "%03d-%04d"%(ccode,scode)
+                            print("Code: " + full_code)
+
+                            try:
+                                future = asyncio.run_coroutine_threadsafe(discord_bot.send_signup_code(email, full_code), discord_bot.bot.loop)
+                                future.result(10)
+
+                                success = True
+                            except Exception as error:
+                                print(error)
+
+                        if '@' in email:
+                            # TODO: send confirmation email
+                            pass
+
+                        if success:
+                            buffer += b'\x00\x00\x00\x01'
+                            TEMP_CHANGE[pid] = [email, scode, 0]
+                        else:
+                            buffer += b'\x00\x00\x00\x00'
+                        
                     elif scode==0x0000:
                         prf.email = ""
                         prf.ccode = 0
