@@ -24,7 +24,8 @@ You can alternatively run `runservers35.sh` or `runservers35.bat` according to y
 Then run each of these scripts: 
 - `python dnsserver.py` - Minimal DNS Server
 - `python httpserver.py` - Main HTTP Server
-- `python shttpserver.py` - HTTPS Server (redirects to HTTP)
+- `python shttpserver.py` - Main HTTPS Server (forwards to HTTP for DS requests, Second HTTPS for others)
+- `python shttpserver2.py` - Second HTTPS Server
 - `python tcpserver.py` - TCP Server
 - `python tcpserver2.py` - Second TCP Server
 - `python udpserver.py` - UDP Server

@@ -6,6 +6,8 @@ python3 httpserver.py &
 HTTP_PID=$!
 python3 shttpserver.py &
 SHTTP_PID=$!
+python3 shttpserver2.py &
+SHTTP2_PID=$!
 python3 tcpserver.py &
 TCP_PID=$!
 python3 tcpserver2.py &
@@ -15,8 +17,8 @@ UDP_PID=$!
 
 stop_servers() {
     echo "Stopping servers..."
-    kill $DNS_PID $HTTP_PID $SHTTP_PID $TCP_PID $TCP2_PID $UDP_PID
-    wait $DNS_PID $HTTP_PID $SHTTP_PID $TCP_PID $TCP2_PID $UDP_PID
+    kill $DNS_PID $HTTP_PID $SHTTP_PID $SHTTP2_PID $TCP_PID $TCP2_PID $UDP_PID
+    wait $DNS_PID $HTTP_PID $SHTTP_PID $SHTTP2_PID $TCP_PID $TCP2_PID $UDP_PID
     echo "Servers stopped."
 }
 

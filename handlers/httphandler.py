@@ -584,10 +584,10 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def render_index_page(self):
-        with open("static/templates/main.html") as file:
+        with open("static/templates/main.html", encoding="utf-8") as file:
             main_template = file.read()
 
-        with open("static/templates/rescue.html") as file:
+        with open("static/templates/rescue.html", encoding="utf-8") as file:
             rescue_template = file.read()
 
         db = Connection()

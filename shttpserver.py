@@ -91,8 +91,9 @@ class CustomHandler(BaseRequestHandler):
         msgtype = val(self.request.recv(1))
         if msgtype==0:
             return 0, b''
-        if val(self.request.recv(2))!=0x300:
-            return 0, b''
+        self.hchksslv = val(self.request.recv(2))
+        #if sslv!=0x300:
+        #    return 0, b''
         length = val(self.request.recv(2))
         data = bytearray()
         while len(data)<length:
@@ -151,8 +152,7 @@ class CustomHandler(BaseRequestHandler):
             if length!=len(data)-4:
                 return False
             if handshaketype==1:
-                if val(data[4:6])!=0x300:
-                    return False
+                sslv = val(data[4:6])
                 self.clientrand = data[6:38]
                 ssid_len = data[38]
                 ssid = data[39:39+ssid_len]
@@ -160,8 +160,41 @@ class CustomHandler(BaseRequestHandler):
                 suites = parse(data[39+ssid_len+2:39+ssid_len+2+suites_len], 2)
                 methods_len = data[39+ssid_len+2+suites_len]
                 methods = parse(data[39+ssid_len+2+suites_len+1:39+ssid_len+2+suites_len+1+methods_len], 1)
-                if 0 not in methods and 5 not in suites:
+                if 0 not in methods or 5 not in suites or sslv!=0x300:
+                    # Switch protocol, since it's not a Nintendo DS
+                    self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.underlying.connect((SERVER_ADDR, 8686))
+                    self.underlying.send(dat(msgtype, 1)+dat(self.hchksslv, 2)+dat(len(orgdata), 2)+orgdata)
+                    self.underlying.setblocking(0)
+                    self.request.setblocking(0)
+                    while True:
+                        try:
+                            d = self.request.recv(4096)
+                        except Exception as e:
+                            d = None
+                        if d==b'':
+                            break
+                        if d is not None:
+                            try:
+                                self.underlying.send(d)
+                            except Exception as e:
+                                d = None
+                        try:
+                            d = self.underlying.recv(4096)
+                        except Exception as e:
+                            d = None
+                        if d==b'':
+                            break
+                        if d is not None:
+                            try:
+                                self.request.send(d)
+                            except Exception as e:
+                                d = None
+                        time.sleep(0.001)
                     return False
+                else:
+                    self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.underlying.connect((SERVER_ADDR, 80))
                 self.sendhello()
                 self.sendcert()
                 self.sendhellodone()
@@ -208,8 +241,7 @@ class CustomHandler(BaseRequestHandler):
         return True
     "One instance per connection.  Override handle(self) to customize action."
     def handle(self):
-        self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.underlying.connect((SERVER_ADDR, 80))
+        self.underlying = None
         try:
             self.hchkall = bytearray()
             self.sciphering = False
@@ -221,7 +253,8 @@ class CustomHandler(BaseRequestHandler):
                 pass
         except Exception as e:
             print(e)
-        self.underlying.close()
+        if self.underlying is not None:
+            self.underlying.close()
 
 shttpserv = TCPServer((SERVER_ADDR, 443), CustomHandler)
 shttpserv.timeout = 5
