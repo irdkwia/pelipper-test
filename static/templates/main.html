@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <title>RE:EoS</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/>
+		<meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {{
+                margin: 20px;
+            }}
+
+            .rescues {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }}
+
+            @media (max-width: 600px) {{
+                .rescues {{
+                    grid-template-columns: 1fr;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+			<h1>Pokémon Mystery Dungeon Wi-Fi Connection Server</h1>
+            <div class="card mt-3 mb-3">
+                <div class="card-body bg-light">
+                    <b>DNS server address</b>: <code>{server_addr}</code>
+                </div>
+            </div>
+            
+            <p>
+                This server allows you to use discontinued online features of <i>Pokémon Mystery Dungeon: Explorers of Time</i>,
+                <i>Explorers of Darkness</i> and <i>Explorers of Sky</i>.
+            </p>
+            <p>
+                Refer to <a href="https://wiki.skytemple.org/index.php/How_to_connect_to_custom_Wi-Fi_Connection_Servers">this guide on the SkyTemple Wiki</a>
+                to learn how to connect your Nintendo DS or emulator.
+            </p>
+
+            <h2>Waiting for Rescue</h2>
+            <p>There are <b>{open_rescues_count}</b> open rescue requests.</p>
+            <div class="rescues mb-3">
+                {rescue_cards}
+            </div>
+
+            <h2>Statistics</h2>
+            <ul>
+                <li><b>{profile_count}</b> total users</li>
+                <li>Sent <b>{sos_mail_count}</b> SOS mails in total</li>
+                <li>Sent <b>{aok_mail_count}</b> A-OK mails in total</li>
+                <li>Sent <b>{thank_you_mail_count}</b> Thank-You mails in total</li>
+                <li>Serving <b>{wonder_mail_count}</b> Wonder Mails</li>
+                <li>Serving <b>{trade_team_count}</b> Trade Teams</li>
+            </ul>
+
+            <h2>Utilities</h2>
+            <ul>
+                <li><a href="/friend">Friend Code region converter</a></li>
+                {rewire_link}
+            </ul>
+		</div>
+    </body>
+</html>

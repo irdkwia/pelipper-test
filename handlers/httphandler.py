@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 import html
 from http.server import BaseHTTPRequestHandler
 from random import randrange, choice
@@ -239,8 +240,11 @@ class CustomHandler(BaseHTTPRequestHandler):
 
                     if discord_bot.enabled:
                         rescued_user_name = None
-                        if not '@' in prf.email and prf.scode: # Discord user name/ID
-                            rescued_user_name = prf.email
+                        (ty, rescued_identifier) = ProfileType.into_parts(prf.email)
+                        print(ty)
+                        print(rescued_identifier)
+                        if ty == ProfileType.DISCORD and prf.scode:
+                            rescued_user_name = rescued_identifier
                         asyncio.run_coroutine_threadsafe(discord_bot.notify_rescue(rescued_user_name, rq.team, rq.title, rq.message, rq.dungeon, rq.floor), discord_bot.bot.loop)
 
                 elif new_path=="/rescue/rescueComplete.asp":
@@ -269,13 +273,13 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 if len(rescued_prf)>0:
                                     rescued_prf = rescued_prf[0]
 
-                                    rescued_user_name = None
-                                    if not '@' in rescued_prf.email and rescued_prf.scode: # Discord user name/ID
-                                        rescued_user_name = rescued_prf.email
+                                    (rescued_ty, rescued_identifier) = ProfileType.into_parts(rescued_prf.email)
+                                    if rescued_ty == ProfileType.DISCORD and rescued_prf.scode:
+                                        rescued_user_name = rescued_identifier
 
-                                    rescuer_user_name = None
-                                    if not '@' in prf.email and prf.scode: # Discord user name/ID
-                                        rescuer_user_name = prf.email
+                                    (rescuer_ty, rescuer_identifier) = ProfileType.into_parts(prf.email)
+                                    if rescuer_ty == ProfileType.DISCORD and prf.scode:
+                                        rescuer_user_name = rescuer_identifier
 
                                     asyncio.run_coroutine_threadsafe(discord_bot.send_aok(rescued_user_name, rescuer_user_name, rq.team, aok.team, aok.title, aok.message, rq.dungeon, rq.floor), discord_bot.bot.loop)
                         else:
@@ -307,8 +311,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                             rescuer_prf = db.get_elements(Profile, {"pid": aok.rescuerpid}, limit=1)
                             if len(rescuer_prf)>0:
                                 rescuer_prf = rescuer_prf[0]
-                                if not '@' in rescuer_prf.email and rescuer_prf.scode: # Discord user name/ID
-                                    asyncio.run_coroutine_threadsafe(discord_bot.send_thank_you(rescuer_prf.email, thk.title, thk.message), discord_bot.bot.loop)
+                                (ty, rescuer_identifier) = ProfileType.into_parts(rescuer_prf.email)
+                                if ty == ProfileType.DISCORD and rescuer_prf.scode: # Discord user name/ID
+                                    asyncio.run_coroutine_threadsafe(discord_bot.send_thank_you(rescuer_identifier, thk.title, thk.message), discord_bot.bot.loop)
 
                 elif new_path=="/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
@@ -331,23 +336,20 @@ class CustomHandler(BaseHTTPRequestHandler):
                     if scode==0xFFFF:
                         success = False
 
-                        if discord_bot.enabled and not '@' in email:
+                        (ty, identifier) = ProfileType.into_parts(email)
+                        if discord_bot.enabled and ty == ProfileType.DISCORD:
                             # If the entered email is not a real email address, treat it as a Discord ID/user name
                             scode = randrange(9999)+1
                             full_code = "%03d-%04d"%(ccode,scode)
                             print("Code: " + full_code)
 
                             try:
-                                future = asyncio.run_coroutine_threadsafe(discord_bot.send_signup_code(email, full_code), discord_bot.bot.loop)
+                                future = asyncio.run_coroutine_threadsafe(discord_bot.send_signup_code(identifier, full_code), discord_bot.bot.loop)
                                 future.result(10)
 
                                 success = True
                             except Exception as error:
                                 print(error)
-
-                        if '@' in email:
-                            # TODO: send confirmation email
-                            pass
 
                         if success:
                             buffer += b'\x00\x00\x00\x01'
@@ -582,6 +584,12 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def render_index_page(self):
+        with open("static/templates/main.html") as file:
+            main_template = file.read()
+
+        with open("static/templates/rescue.html") as file:
+            rescue_template = file.read()
+
         db = Connection()
 
         # TODO: cache statistics for future accesses (it should be enough to update them every few seconds or so)
@@ -617,82 +625,46 @@ class CustomHandler(BaseHTTPRequestHandler):
             rid_str = f"{rq.rid:012d}"
             code = f"{rid_str[:4]}-{rid_str[4:8]}-{rid_str[8:]}"
 
-            rescue_cards.append(f"""
-<div class="card bg-light">
-<div class="card-body">
-    <h5 class="card-title">{title}</h5>
-    <h6 class="card-subtitle mb-2 text-muted">{base_game_constants.format_floor(rq.dungeon, rq.floor)}</h6>
-    <p class="card-text mt-1 mb-1"><b>Rescue Number:</b> {code}</p>
-    <p class="card-text mt-1 mb-1"><b>Client:</b> {rq.team} (<i>{game}</i>)</p>
-    <blockquote class="card-text mt-1 text-muted">"{message}"</blockquote>
-</div>
-</div>
-""")
+            vars = {
+                "title": title,
+                "dungeon": base_game_constants.format_floor(rq.dungeon, rq.floor),
+                "code": code,
+                "team": rq.team,
+                "game": game,
+                "message": message
+            }
+            card = rescue_template.format(**vars)
+            rescue_cards.append(card)
 
-        buffer = f"""<html>
-    <head>
-        <title>RE:EoS</title>
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/>
-		<meta charset="utf-8"/>
-        <style>
-            body {{
-                margin: 20px;
-            }}
+        vars = {
+            "server_addr": constants.SERVER_ADDR,
+            "profile_count": profile_count,
+            "sos_mail_count": sos_mail_count,
+            "aok_mail_count": aok_mail_count,
+            "thank_you_mail_count": thank_you_mail_count,
+            "wonder_mail_count": wonder_mail_count,
+            "trade_team_count": trade_team_count,
 
-            .rescues {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
-            }}
+            "open_rescues_count": open_rescues_count,
+            "rescue_cards": "\n".join(rescue_cards),
 
-            @media (max-width: 600px) {{
-                .rescues {{
-                    grid-template-columns: 1fr;
-                }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-			<h1>Pokémon Mystery Dungeon Wi-Fi Connection Server</h1>
-            <div class="card mt-3 mb-3">
-                <div class="card-body">
-                    <b>DNS server address</b>: <code>{constants.SERVER_ADDR}</code>
-                </div>
-            </div>
-            
-            <p>
-                This server allows you to use discontinued online features of <i>Pokémon Mystery Dungeon: Explorers of Time</i>,
-                <i>Explorers of Darkness</i> and <i>Explorers of Sky</i>.
-            </p>
-            <p>
-                Refer to <a href="https://wiki.skytemple.org/index.php/How_to_connect_to_custom_Wi-Fi_Connection_Servers">this guide on the SkyTemple Wiki</a>
-                to learn how to connect your Nintendo DS or emulator.
-            </p>
+            "rewire_link": '<li><a href="/rewire">Profile migration tool</a></li>' if REWIRE else ''
+        }
+        return main_template.format(**vars).encode("utf-8")
 
-            <h2>Waiting for Rescue</h2>
-            <p>There are <b>{open_rescues_count}</b> open rescue requests.</p>
-            <div class="rescues mb-3">
-                {'\n'.join(rescue_cards)}
-            </div>
+class ProfileType(Enum):
+    UNKNOWN = 0
+    EMAIL = 1
+    DISCORD = 2
 
-            <h2>Statistics</h2>
-            <ul>
-                <li><b>{profile_count}</b> total users</li>
-                <li>Sent <b>{sos_mail_count}</b> SOS mails in total</li>
-                <li>Sent <b>{aok_mail_count}</b> A-OK mails in total</li>
-                <li>Sent <b>{thank_you_mail_count}</b> Thank-You mails in total</li>
-                <li>Serving <b>{wonder_mail_count}</b> Wonder Mails</li>
-                <li>Serving <b>{trade_team_count}</b> Trade Teams</li>
-            </ul>
+    @staticmethod    
+    def into_parts(combined_name: str):
+        if not combined_name:
+            return (ProfileType.UNKNOWN, combined_name)
 
-            <h2>Utilities</h2>
-            <ul>
-                <li><a href="/friend">Friend Code region converter</a></li>
-                {'<li><a href="/rewire">Profile migration tool</a></li>' if REWIRE else ''}
-            </ul>
-		</div>
-    </body>
-</html>
-"""
-        return buffer.encode("utf-8")
+        if combined_name.startswith('&discord&'):
+            return (ProfileType.DISCORD, combined_name[9:])
+        elif '@' in combined_name:
+            return (ProfileType.EMAIL, combined_name)
+        else:
+            return (ProfileType.UNKNOWN, combined_name)
