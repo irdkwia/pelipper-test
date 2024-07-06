@@ -7,6 +7,7 @@
 import rsa
 
 import socket
+import traceback
 from socketserver import BaseRequestHandler, TCPServer
 from random import randrange
 from base64 import b64decode
@@ -164,9 +165,13 @@ class CustomHandler(BaseRequestHandler):
                     # Switch protocol, since it's not a Nintendo DS
                     self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.underlying.connect((SERVER_ADDR, 8686))
+                    self.underlying.settimeout(5)
                     self.underlying.send(dat(msgtype, 1)+dat(self.hchksslv, 2)+dat(len(orgdata), 2)+orgdata)
                     self.underlying.setblocking(0)
                     self.request.setblocking(0)
+                    timeout = 0
+                    tmpd = bytearray()
+                    tmpe = bytearray()
                     while True:
                         try:
                             d = self.request.recv(4096)
@@ -175,8 +180,11 @@ class CustomHandler(BaseRequestHandler):
                         if d==b'':
                             break
                         if d is not None:
+                            tmpd += d
                             try:
-                                self.underlying.send(d)
+                                self.underlying.send(bytes(tmpd))
+                                timeout = 0
+                                tmpd = bytearray()
                             except Exception as e:
                                 d = None
                         try:
@@ -186,15 +194,22 @@ class CustomHandler(BaseRequestHandler):
                         if d==b'':
                             break
                         if d is not None:
+                            tmpe += d
                             try:
-                                self.request.send(d)
+                                self.request.send(bytes(tmpe))
+                                timeout = 0
+                                tmpe = bytearray()
                             except Exception as e:
                                 d = None
-                        time.sleep(0.001)
+                        timeout += 1
+                        if timeout>=50:
+                            break
+                        time.sleep(0.1)
                     return False
                 else:
                     self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.underlying.connect((SERVER_ADDR, 80))
+                    self.underlying.settimeout(5)
                 self.sendhello()
                 self.sendcert()
                 self.sendhellodone()
@@ -242,6 +257,7 @@ class CustomHandler(BaseRequestHandler):
     "One instance per connection.  Override handle(self) to customize action."
     def handle(self):
         self.underlying = None
+        self.request.settimeout(5)
         try:
             self.hchkall = bytearray()
             self.sciphering = False
@@ -252,9 +268,12 @@ class CustomHandler(BaseRequestHandler):
             while self.parsemessage():
                 pass
         except Exception as e:
-            print(e)
+            traceback.print_exc()
         if self.underlying is not None:
-            self.underlying.close()
+            try:
+                self.underlying.close()
+            except Exception as e:
+                traceback.print_exc()
 
 shttpserv = TCPServer((SERVER_ADDR, 443), CustomHandler)
 shttpserv.timeout = 5
