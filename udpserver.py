@@ -1,4 +1,4 @@
-from socketserver import DatagramRequestHandler, UDPServer
+from socketserver import DatagramRequestHandler, UDPServer, ThreadingMixIn
 from random import randrange, choice
 from base64 import b64decode, b64encode
 from hashlib import md5
@@ -35,8 +35,12 @@ class CustomHandler(DatagramRequestHandler):
             self.wfile.write(b'\xfe\xfd\x0a')
             self.wfile.write(cid.to_bytes(4, 'big'))
             self.wfile.write(bytes(11))
-            
-udpserv = UDPServer((SERVER_ADDR, 27900), CustomHandler)
+
+class ThreadedUDPServer(ThreadingMixIn, UDPServer):
+    pass
+
+udpserv = ThreadedUDPServer((SERVER_ADDR, 27900), CustomHandler)
+udpserv.timeout = 5
 
 print("Starting UDP server...")
 udpserv.serve_forever()
