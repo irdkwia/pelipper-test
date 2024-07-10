@@ -1,7 +1,11 @@
-from handlers.httphandler import *
 from http.server import HTTPServer
+from socketserver import ThreadingMixIn
+from handlers.httphandler import *
 
-httpserv = HTTPServer((SERVER_ADDR, 80), CustomHandler)
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    pass
+
+httpserv = ThreadedHTTPServer((SERVER_ADDR, 80), CustomHandler)
 httpserv.timeout = 5
 
 print("Starting HTTP server...")

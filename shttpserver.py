@@ -8,7 +8,7 @@ import rsa
 
 import socket
 import traceback
-from socketserver import BaseRequestHandler, TCPServer
+from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 from random import randrange
 from base64 import b64decode
 
@@ -202,9 +202,9 @@ class CustomHandler(BaseRequestHandler):
                             except Exception as e:
                                 d = None
                         timeout += 1
-                        if timeout>=50:
+                        if timeout>=5000:
                             break
-                        time.sleep(0.1)
+                        time.sleep(0.001)
                     return False
                 else:
                     self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -275,8 +275,10 @@ class CustomHandler(BaseRequestHandler):
             except Exception as e:
                 traceback.print_exc()
 
-shttpserv = TCPServer((SERVER_ADDR, 443), CustomHandler)
-shttpserv.timeout = 5
+class ThreadedTCPServer(ThreadingMixIn, TCPServer):
+    pass
+
+shttpserv = ThreadedTCPServer((SERVER_ADDR, 443), CustomHandler)
 
 print("Starting HTTPS server...")
 shttpserv.serve_forever()
