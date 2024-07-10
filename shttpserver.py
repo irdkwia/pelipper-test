@@ -172,15 +172,17 @@ class CustomHandler(BaseRequestHandler):
                     timeout = 0
                     tmpd = bytearray()
                     tmpe = bytearray()
+                    finish = False
                     while True:
                         try:
                             d = self.request.recv(4096)
                         except Exception as e:
                             d = None
                         if d==b'':
-                            break
+                            finish = True
                         if d is not None:
                             tmpd += d
+                        if len(tmpd)>0:
                             try:
                                 self.underlying.send(bytes(tmpd))
                                 timeout = 0
@@ -192,9 +194,10 @@ class CustomHandler(BaseRequestHandler):
                         except Exception as e:
                             d = None
                         if d==b'':
-                            break
+                            finish = True
                         if d is not None:
                             tmpe += d
+                        if len(tmpe)>0:
                             try:
                                 self.request.send(bytes(tmpe))
                                 timeout = 0
@@ -202,7 +205,9 @@ class CustomHandler(BaseRequestHandler):
                             except Exception as e:
                                 d = None
                         timeout += 1
-                        if timeout>=5000:
+                        if timeout==1:
+                            continue
+                        if timeout>=5000 or finish:
                             break
                         time.sleep(0.001)
                     return False
