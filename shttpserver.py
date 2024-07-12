@@ -7,7 +7,10 @@
 import rsa
 
 import socket
+import threading
 import traceback
+
+from datetime import datetime, timezone
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 from random import randrange
 from base64 import b64decode
@@ -15,6 +18,8 @@ from base64 import b64decode
 from hashlib import sha1, md5
 
 from structure.database import *
+
+SERVER_DEBUG = True
 
 with open("cert/server.key", "r") as file:
     privateKey = rsa.PrivateKey.load_pkcs1(file.read())
@@ -75,6 +80,9 @@ def parse(b, l):
     for i in range(0, len(b), l):
         x.append(val(b[i:i+l]))
     return x
+
+def getident():
+    return "[%08X] %s - " % (threading.get_ident(), datetime.now(timezone.utc).strftime("%d/%m/%y %H:%M:%S"))
 
 class CustomHandler(BaseRequestHandler):
     def sendmessage(self, data, msgtype):
@@ -137,6 +145,7 @@ class CustomHandler(BaseRequestHandler):
         self.sendhandshake(md5_hash+sha1_hash, 0x14)
         
     def parsemessage(self):
+        if SERVER_DEBUG:print(getident()+"Parse message")
         msgtype, data = self.recvmessage()
         if msgtype==0x00:
             return False
@@ -162,6 +171,7 @@ class CustomHandler(BaseRequestHandler):
                 methods_len = data[39+ssid_len+2+suites_len]
                 methods = parse(data[39+ssid_len+2+suites_len+1:39+ssid_len+2+suites_len+1+methods_len], 1)
                 if 0 not in methods or 5 not in suites or sslv!=0x300:
+                    if SERVER_DEBUG:print(getident()+"Start common HTTPS communication")
                     # Switch protocol, since it's not a Nintendo DS
                     self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.underlying.connect((SERVER_ADDR, 8686))
@@ -210,6 +220,7 @@ class CustomHandler(BaseRequestHandler):
                         if timeout>=5000 or finish:
                             break
                         time.sleep(0.001)
+                    if SERVER_DEBUG:print(getident()+"End common HTTPS communication")
                     return False
                 else:
                     self.underlying = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -246,6 +257,7 @@ class CustomHandler(BaseRequestHandler):
             self.hchkall += orgdata
             self.hchkall += self.hchksent
         elif msgtype==0x17:
+            if SERVER_DEBUG:print(getident()+"Start DS HTTP communication")
             self.underlying.send(data)
             full = bytearray()
             b = self.underlying.recv(1024)
@@ -254,13 +266,16 @@ class CustomHandler(BaseRequestHandler):
                 b = self.underlying.recv(1024)
                 full += b
             self.sendmessage(bytes(full), 0x17)
+            if SERVER_DEBUG:print(getident()+"End DS HTTP communication")
             return False
         else:
             print("Unk Specs", msgtype, data)
             return False
         return True
+    
     "One instance per connection.  Override handle(self) to customize action."
     def handle(self):
+        if SERVER_DEBUG:print(getident()+"Start request")
         self.underlying = None
         self.request.settimeout(5)
         try:
@@ -274,11 +289,13 @@ class CustomHandler(BaseRequestHandler):
                 pass
         except Exception as e:
             traceback.print_exc()
+        if SERVER_DEBUG:print(getident()+"Close underlying")
         if self.underlying is not None:
             try:
                 self.underlying.close()
             except Exception as e:
                 traceback.print_exc()
+        if SERVER_DEBUG:print(getident()+"End request")
 
 class ThreadedTCPServer(ThreadingMixIn, TCPServer):
     pass
