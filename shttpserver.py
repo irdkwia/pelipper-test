@@ -82,7 +82,7 @@ def parse(b, l):
     return x
 
 def getident():
-    return "[%08X] %s - " % (threading.get_ident(), datetime.now(timezone.utc).strftime("%d/%m/%y %H:%M:%S"))
+    return "[%08X] %s - " % (threading.get_native_id(), datetime.now(timezone.utc).strftime("%d/%m/%y %H:%M:%S"))
 
 class CustomHandler(BaseRequestHandler):
     def sendmessage(self, data, msgtype):
@@ -106,7 +106,10 @@ class CustomHandler(BaseRequestHandler):
         length = val(self.request.recv(2))
         data = bytearray()
         while len(data)<length:
-            data += self.request.recv(length)
+            d = self.request.recv(length-len(data))
+            if len(d)==0:
+                return 0, b''
+            data += d
         data = bytes(data)
         if self.cciphering:
             data = self.rc4client.decrypt(data)
