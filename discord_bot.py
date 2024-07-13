@@ -17,7 +17,7 @@ async def send_signup_code(username_or_id: str, signup_code: str):
     else:
         raise Exception("Failed to find user: " + username_or_id)
 
-async def notify_rescue(username_or_id: Optional[str], team: str, title: str, message: str, dungeon_id: int, floor: int):
+async def notify_rescue(username_or_id: Optional[str], team: str, title: str, message: str, dungeon_id: int, floor: int, code: str):
     if not constants.DISCORD_UPDATE_CHANNEL_ID:
         return
 
@@ -29,11 +29,12 @@ async def notify_rescue(username_or_id: Optional[str], team: str, title: str, me
 
     description = f"Team {team} requested a rescue!"
     if user:
-        description = f"<@!{user.id}> requested a rescue!" # <@!{user_id}> mentions without pinging the user
+        description = f"<@{user.id}> requested a rescue!"
 
     embed = discord.Embed(title=f"New SOS Mail", description=description, color=0xff0000)
     embed.add_field(name="Team Name", value=team, inline=False)
     embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor), inline=False)
+    embed.add_field(name="Rescue Number", value=code, inline=False)
     if title:
         embed.add_field(name="Title", value=title, inline=False)
     if message:
@@ -43,10 +44,12 @@ async def notify_rescue(username_or_id: Optional[str], team: str, title: str, me
     except Exception as error:
         print("Error:", error)
 
-async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id: Optional[str], rescued_team: str, rescuer_team: str, title: str, message: str, dungeon_id: int, floor: int):
+async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id: Optional[str], rescued_team: str, rescuer_team: str, title: str, message: str, dungeon_id: int, floor: int, code: str):
     def apply_embed_fields(embed: discord.Embed):
-        embed.add_field(name="Team Name", value=rescuer_team, inline=False)
-        embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor), inline=False)
+        embed.add_field(name="Rescued Team", value=rescued_team)
+        embed.add_field(name="Rescuer", value=rescuer_team)
+        embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor))
+        embed.add_field(name="Rescue Number", value=code)
         if title:
             embed.add_field(name="Title", value=title, inline=False)
         if message:
@@ -60,10 +63,10 @@ async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id
 
         description_rescuer = f"Team {rescuer_team}"
         if rescuer_user:
-            description_rescuer = f"<@!{rescuer_user.id}>"
+            description_rescuer = f"<@{rescuer_user.id}>"
         description_rescued = f"Team {rescued_team}"
         if rescued_user:
-            description_rescued = f"<@!{rescued_user.id}>"
+            description_rescued = f"<@{rescued_user.id}>"
         description = f"{description_rescuer} has rescued {description_rescued}!"
         embed = discord.Embed(title="New A-OK Mail", description=description, color=0x00ff00)
 

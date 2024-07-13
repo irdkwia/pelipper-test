@@ -82,7 +82,7 @@ def parse(b, l):
     return x
 
 def getident():
-    return "[%08X] %s - " % (threading.get_ident(), datetime.now(timezone.utc).strftime("%d/%m/%y %H:%M:%S"))
+    return "[%08X] %s - " % (threading.get_native_id(), datetime.now(timezone.utc).strftime("%d/%m/%y %H:%M:%S"))
 
 class CustomHandler(BaseRequestHandler):
     def sendmessage(self, data, msgtype):
