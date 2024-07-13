@@ -245,7 +245,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         print(rescued_identifier)
                         if ty == ProfileType.DISCORD and prf.scode:
                             rescued_user_name = rescued_identifier
-                        asyncio.run_coroutine_threadsafe(discord_bot.notify_rescue(rescued_user_name, rq.team, rq.title, rq.message, rq.dungeon, rq.floor), discord_bot.bot.loop)
+                        asyncio.run_coroutine_threadsafe(discord_bot.notify_rescue(rescued_user_name, rq.team, rq.title, rq.message, rq.dungeon, rq.floor, format_rescue_code(rq.rid)), discord_bot.bot.loop)
 
                 elif new_path=="/rescue/rescueComplete.asp":
                     rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
@@ -281,7 +281,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     if rescuer_ty == ProfileType.DISCORD and prf.scode:
                                         rescuer_user_name = rescuer_identifier
 
-                                    asyncio.run_coroutine_threadsafe(discord_bot.send_aok(rescued_user_name, rescuer_user_name, rq.team, aok.team, aok.title, aok.message, rq.dungeon, rq.floor), discord_bot.bot.loop)
+                                    asyncio.run_coroutine_threadsafe(discord_bot.send_aok(rescued_user_name, rescuer_user_name, rq.team, aok.team, aok.title, aok.message, rq.dungeon, rq.floor, format_rescue_code(rq.rid)), discord_bot.bot.loop)
                         else:
                             buffer += b'\x00\x00\x00\x00'
                     else:
@@ -622,13 +622,10 @@ class CustomHandler(BaseHTTPRequestHandler):
             if not message:
                 message = "We were defeated! Please help!"
 
-            rid_str = f"{rq.rid:012d}"
-            code = f"{rid_str[:4]}-{rid_str[4:8]}-{rid_str[8:]}"
-
             vars = {
                 "title": title,
                 "dungeon": base_game_constants.format_floor(rq.dungeon, rq.floor),
-                "code": code,
+                "code": format_rescue_code(rq.rid),
                 "team": rq.team,
                 "game": game,
                 "message": message
@@ -668,3 +665,7 @@ class ProfileType(Enum):
             return (ProfileType.EMAIL, combined_name)
         else:
             return (ProfileType.UNKNOWN, combined_name)
+
+def format_rescue_code(rid):
+    rid_str = f"{rid:012d}"
+    return f"{rid_str[:4]}-{rid_str[4:8]}-{rid_str[8:]}"
