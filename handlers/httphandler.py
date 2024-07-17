@@ -319,10 +319,11 @@ class CustomHandler(BaseHTTPRequestHandler):
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
                     if len(thk)>0:
                         thk = thk[0]
-                        if thk.claimed:
-                            buffer += b'\x00\x00\x00\x00'
-                        else:
+                        thk.claimed = 1
+                        if db.update_elements([thk], {"claimed": 0}):
                             buffer += b'\x00\x00\x00\x01'+thk.getdata()[8:]
+                        else:
+                            buffer += b'\x00\x00\x00\x00'
                     else:
                         buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/common/setProfile.asp":
