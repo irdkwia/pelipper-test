@@ -273,10 +273,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 if len(rescued_prf)>0:
                                     rescued_prf = rescued_prf[0]
 
+                                    rescued_user_name = None
                                     (rescued_ty, rescued_identifier) = ProfileType.into_parts(rescued_prf.email)
                                     if rescued_ty == ProfileType.DISCORD and rescued_prf.scode:
                                         rescued_user_name = rescued_identifier
 
+                                    rescuer_user_name = None
                                     (rescuer_ty, rescuer_identifier) = ProfileType.into_parts(prf.email)
                                     if rescuer_ty == ProfileType.DISCORD and prf.scode:
                                         rescuer_user_name = rescuer_identifier
