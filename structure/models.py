@@ -1,4 +1,5 @@
 from structure.constants import *
+from structure.tools import escape_string
 
 def unificate(langorg, langtarget=None):
     if langorg==0:
@@ -83,7 +84,7 @@ class TeamData:
     def getdata(self, langtarget):
         subbuffer = bytearray(36)
         subbuffer[0:8] = self.tid.to_bytes(8, 'big')
-        subbuffer[8:28] = (self.team+'\x00'*(10-len(self.team))).encode("utf-16-le")
+        subbuffer[8:28] = (escape_string(self.team)+'\x00'*(10-len(self.team))).encode("utf-16-le")
         subbuffer[28:32] = self.rank.to_bytes(4, 'big')
         subbuffer[32:36] = unificate(self.lang, langtarget).to_bytes(4, 'big')
         subbuffer += self.pkmn
@@ -112,14 +113,14 @@ class RescueRequest:
         subbuffer = bytearray(188)
         subbuffer[0:8] = self.rid.to_bytes(8, 'big')
         subbuffer[8:16] = self.uid.to_bytes(8, 'big')
-        subbuffer[32:52] = (self.team+'\x00'*(10-len(self.team))).encode("utf-16-le")
+        subbuffer[32:52] = (escape_string(self.team)+'\x00'*(10-len(self.team))).encode("utf-16-le")
         subbuffer[52:56] = self.dungeon.to_bytes(4, 'big')
         subbuffer[56:60] = self.floor.to_bytes(4, 'big')
         subbuffer[60:64] = self.seed.to_bytes(4, 'big')
         subbuffer[64:68] = self.game.to_bytes(4, 'big')
         subbuffer[68:72] = unificate(self.lang, langtarget).to_bytes(4, 'big')
-        subbuffer[72:108] = (self.title+'\x00'*(18-len(self.title))).encode("utf-16-be")
-        subbuffer[108:180] = (self.message+'\x00'*(36-len(self.message))).encode("utf-16-be")
+        subbuffer[72:108] = (escape_string(self.title)+'\x00'*(18-len(self.title))).encode("utf-16-be")
+        subbuffer[108:180] = (escape_string(self.message)+'\x00'*(36-len(self.message))).encode("utf-16-be")
         subbuffer[180:188] = (1).to_bytes(4, 'big')+(1).to_bytes(4, 'big')
         return subbuffer
 
@@ -143,13 +144,13 @@ class RescueAOK:
         subbuffer[0:8] = self.rid.to_bytes(8, 'big')
         subbuffer[8:16] = self.uresp.to_bytes(8, 'big', signed=True)
         subbuffer[32:40] = self.code.to_bytes(8, 'big', signed=True)
-        subbuffer[56:76] = (self.team+'\x00'*(10-len(self.team))).encode("utf-16-le")
+        subbuffer[56:76] = (escape_string(self.team)+'\x00'*(10-len(self.team))).encode("utf-16-le")
         subbuffer[76:80] = self.item
         subbuffer[80:144] = self.pkmn
         subbuffer[144:148] = self.game.to_bytes(4, 'big')
         subbuffer[148:152] = unificate(self.lang, langtarget).to_bytes(4, 'big')
-        subbuffer[152:188] = (self.title+'\x00'*(18-len(self.title))).encode("utf-16-be")
-        subbuffer[188:260] = (self.message+'\x00'*(36-len(self.message))).encode("utf-16-be")
+        subbuffer[152:188] = (escape_string(self.title)+'\x00'*(18-len(self.title))).encode("utf-16-be")
+        subbuffer[188:260] = (escape_string(self.message)+'\x00'*(36-len(self.message))).encode("utf-16-be")
         return subbuffer
 
 class RescueThanks:
@@ -167,8 +168,8 @@ class RescueThanks:
         subbuffer[0:8] = self.rid.to_bytes(8, 'big')
         subbuffer[8:16] = self.code.to_bytes(8, 'big', signed=True)
         subbuffer[32:36] = self.item
-        subbuffer[36:72] = (self.title+'\x00'*(18-len(self.title))).encode("utf-16-be")
-        subbuffer[72:144] = (self.message+'\x00'*(36-len(self.message))).encode("utf-16-be")
+        subbuffer[36:72] = (escape_string(self.title)+'\x00'*(18-len(self.title))).encode("utf-16-be")
+        subbuffer[72:144] = (escape_string(self.message)+'\x00'*(36-len(self.message))).encode("utf-16-be")
         return subbuffer
 
 class BuddyList:

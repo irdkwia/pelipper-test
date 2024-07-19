@@ -70,3 +70,6 @@ def calcsumfriend(source, buffer):
     for b in buffer:
         s = source[(b^s)&0xFF]
     return s
+
+def escape_string(string):
+    return string.replace("[", "(").replace("]", ")").replace("~", "-")
