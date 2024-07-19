@@ -8,9 +8,11 @@ from urllib.parse import urlparse, parse_qs
 from datetime import datetime
 from hashlib import sha1
 import discord_bot
-from structure import constants, base_game_constants
 
+from structure.constants import *
+from structure.models import *
 from structure.database import *
+from structure.dungeon_formatter import *
 from structure.tools import *
 
 TEMP_CHANGE = dict()
@@ -245,7 +247,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         print(rescued_identifier)
                         if ty == ProfileType.DISCORD and prf.scode:
                             rescued_user_name = rescued_identifier
-                        asyncio.run_coroutine_threadsafe(discord_bot.notify_rescue(rescued_user_name, rq.team, rq.title, rq.message, rq.dungeon, rq.floor, format_rescue_code(rq.rid)), discord_bot.bot.loop)
+                        asyncio.run_coroutine_threadsafe(discord_bot.notify_rescue(rescued_user_name, rq.team, rq.title, rq.message, format_floor(db, rq.dungeon, rq.floor), format_rescue_code(rq.rid)), discord_bot.bot.loop)
 
                 elif new_path=="/rescue/rescueComplete.asp":
                     rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
@@ -283,7 +285,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     if rescuer_ty == ProfileType.DISCORD and prf.scode:
                                         rescuer_user_name = rescuer_identifier
 
-                                    asyncio.run_coroutine_threadsafe(discord_bot.send_aok(rescued_user_name, rescuer_user_name, rq.team, aok.team, aok.title, aok.message, rq.dungeon, rq.floor, format_rescue_code(rq.rid)), discord_bot.bot.loop)
+                                    asyncio.run_coroutine_threadsafe(discord_bot.send_aok(rescued_user_name, rescuer_user_name, rq.team, aok.team, aok.title, aok.message, format_floor(db, rq.dungeon, rq.floor), format_rescue_code(rq.rid)), discord_bot.bot.loop)
                         else:
                             buffer += b'\x00\x00\x00\x00'
                     else:
@@ -627,7 +629,7 @@ class CustomHandler(BaseHTTPRequestHandler):
 
             vars = {
                 "title": title,
-                "dungeon": base_game_constants.format_floor(rq.dungeon, rq.floor),
+                "dungeon": format_floor(db, rq.dungeon, rq.floor),
                 "code": format_rescue_code(rq.rid),
                 "team": rq.team,
                 "game": game,
@@ -637,7 +639,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             rescue_cards.append(card)
 
         vars = {
-            "server_addr": constants.SERVER_ADDR,
+            "server_addr": SERVER_ADDR,
             "profile_count": profile_count,
             "sos_mail_count": sos_mail_count,
             "aok_mail_count": aok_mail_count,

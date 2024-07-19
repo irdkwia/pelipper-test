@@ -187,11 +187,18 @@ class WMGameList:
         self.version = GAME_SKY
 
 class WMPassList:
-    key = ["passwd"]
+    key = ["wid"]
     def __init__(self):
         self.wid = 0
         self.data = bytes(17)
         self.version = GAME_SKY
+
+class DungeonData:
+    key = ["did"]
+    def __init__(self):
+        self.did = 0
+        self.name = ""
+        self.direction = DIR_DOWN
 
 class ProfileChange:
     key = ["pid"]

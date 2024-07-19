@@ -147,7 +147,6 @@ for prefix in listprefix:
             title TEXT NOT NULL,
             message TEXT NOT NULL,
             udate INTEGER NOT NULL,
-            udate INTEGER NOT NULL,
             rescuerpid INTEGER NOT NULL,
         )
     """ % prefix)
@@ -170,6 +169,15 @@ for prefix in listprefix:
             wid INTEGER NOT NULL PRIMARY KEY,
             data BLOB NOT NULL,
             version INTEGER NOT NULL,
+            udate INTEGER NOT NULL
+        )
+    """ % prefix)
+
+    cur.execute("""
+        CREATE TABLE %sdungeondata (
+            did INTEGER NOT NULL PRIMARY KEY,
+            name TEXT NOT NULL,
+            direction INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
     """ % prefix)

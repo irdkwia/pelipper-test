@@ -2,6 +2,9 @@ GAME_TIME = 0
 GAME_DARKNESS = 1
 GAME_SKY = 2
 
+DIR_DOWN = 0
+DIR_UP = 1
+
 UNIFIED_TABLES = ["globalprofile", "profile", "buddylist", "wmgamelist", "profilechange"]
 
 REWIRE = True

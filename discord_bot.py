@@ -2,7 +2,11 @@ import discord
 from discord.ext import commands
 from typing import Optional
 import threading
-from structure import base_game_constants, constants
+
+from structure.constants import *
+from structure.models import *
+from structure.database import *
+from structure.dungeon_formatter import *
 
 description = '''A bot that notifies users about WFC events in PMD: Explorers of Sky, such as dungeon rescues.'''
 
@@ -17,11 +21,11 @@ async def send_signup_code(username_or_id: str, signup_code: str):
     else:
         raise Exception("Failed to find user: " + username_or_id)
 
-async def notify_rescue(username_or_id: Optional[str], team: str, title: str, message: str, dungeon_id: int, floor: int, code: str):
-    if not constants.DISCORD_UPDATE_CHANNEL_ID:
+async def notify_rescue(username_or_id: Optional[str], team: str, title: str, message: str, dungeon_info: str, code: str):
+    if not DISCORD_UPDATE_CHANNEL_ID:
         return
 
-    channel = bot.get_channel(constants.DISCORD_UPDATE_CHANNEL_ID)
+    channel = bot.get_channel(DISCORD_UPDATE_CHANNEL_ID)
 
     user = None
     if username_or_id:
@@ -33,7 +37,7 @@ async def notify_rescue(username_or_id: Optional[str], team: str, title: str, me
 
     embed = discord.Embed(title=f"New SOS Mail", description=description, color=0xff0000)
     embed.add_field(name="Team Name", value=team, inline=False)
-    embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor), inline=False)
+    embed.add_field(name="Dungeon", value=dungeon_info, inline=False)
     embed.add_field(name="Rescue Number", value=code, inline=False)
     if title:
         embed.add_field(name="Title", value=title, inline=False)
@@ -44,11 +48,11 @@ async def notify_rescue(username_or_id: Optional[str], team: str, title: str, me
     except Exception as error:
         print("Error:", error)
 
-async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id: Optional[str], rescued_team: str, rescuer_team: str, title: str, message: str, dungeon_id: int, floor: int, code: str):
+async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id: Optional[str], rescued_team: str, rescuer_team: str, title: str, message: str, dungeon_info: str, code: str):
     def apply_embed_fields(embed: discord.Embed):
         embed.add_field(name="Rescued Team", value=rescued_team)
         embed.add_field(name="Rescuer", value=rescuer_team)
-        embed.add_field(name="Dungeon", value=base_game_constants.format_floor(dungeon_id, floor))
+        embed.add_field(name="Dungeon", value=dungeon_info)
         embed.add_field(name="Rescue Number", value=code)
         if title:
             embed.add_field(name="Title", value=title, inline=False)
@@ -58,8 +62,8 @@ async def send_aok(rescued_username_or_id: Optional[str], rescuer_username_or_id
     rescued_user = await get_user_by_username_or_id(rescued_username_or_id)
     rescuer_user = await get_user_by_username_or_id(rescuer_username_or_id)
 
-    if constants.DISCORD_UPDATE_CHANNEL_ID:
-        channel = bot.get_channel(constants.DISCORD_UPDATE_CHANNEL_ID)
+    if DISCORD_UPDATE_CHANNEL_ID:
+        channel = bot.get_channel(DISCORD_UPDATE_CHANNEL_ID)
 
         description_rescuer = f"Team {rescuer_team}"
         if rescuer_user:
@@ -118,12 +122,12 @@ async def get_user_by_username_or_id(username_or_id: str) -> Optional[discord.Us
 event_loop = None
 
 def run():
-    bot.run(constants.DISCORD_TOKEN)
+    bot.run(DISCORD_TOKEN)
 
 bot = None
 enabled = False
 
-if constants.DISCORD_TOKEN:
+if DISCORD_TOKEN:
     bot = commands.Bot(command_prefix='?', description=description, intents=intents)
 
     bot_thread = threading.Thread(target=run)
