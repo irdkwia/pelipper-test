@@ -147,7 +147,7 @@ for prefix in listprefix:
             title TEXT NOT NULL,
             message TEXT NOT NULL,
             udate INTEGER NOT NULL,
-            rescuerpid INTEGER NOT NULL,
+            rescuerpid INTEGER NOT NULL
         )
     """ % prefix)
 
