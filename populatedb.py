@@ -7,12 +7,19 @@ DEFAULT_SKY = False
 DEFAULT_TIMEDARK = False
 GABITE = False
 SPEP_TEST = False
-DUNGEON_DATA = True
+DUNGEON_DATA = False
+DEFAULT_WII = False
 
 
 con = sqlite3.connect("database/pelipper.db")
 cur = con.cursor()
 
+if DEFAULT_WII:
+    cur.execute("""
+        INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
+        VALUES ("ZH5ufUAag38i6EJn", "pokedngnwii", "0", 0, 0)
+    """)
+    
 if DEFAULT_SKY:
     cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)

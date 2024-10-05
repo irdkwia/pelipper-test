@@ -35,8 +35,10 @@ class CustomHandler(BaseHTTPRequestHandler):
         data = dict()
         for k, v in denc.items():
             s = b64decode(v[0].translate(str.maketrans({'-': '+', '_': '/', '*': '='})))
-            if k in ["devname", "ingamesn"]:
-                data[k] = s.decode("utf-16")
+            if k in ["words"]:
+                data[k] = s
+            elif k in ["devname", "ingamesn"]:
+                data[k] = s.decode(ENCODING)
             else:
                 data[k] = s.decode("ascii")
         return data
@@ -334,7 +336,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     action = select>>32
                     prf.lang = select&0xFFFFFFFF
                     prf.flags = int.from_bytes(data[0x38:0x3C], 'big')
-                    prf.team = data[0x3C:0x50].decode('utf-16').replace('\x00', '')
+                    prf.team = data[0x3C:0x50].decode("utf-16-le").replace('\x00', '')
                     ccode = int.from_bytes(data[0x50:0x52], 'big')
                     email = data[:0x38].decode("ascii").replace('\x00', '')
                     scode = int.from_bytes(data[0x52:0x54], 'big')
@@ -415,7 +417,18 @@ class CustomHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         self.attributes()
         psplit = urlparse(self.path)
-        if psplit.path=="/ac":
+        if psplit.path=="/pr":
+            ctype = self.headers.get('content-type')
+            if ctype=="application/x-www-form-urlencoded":
+                data = self.parse_form()
+                res = dict()
+                res["returncd"] = "000" #MAX 3
+                res["prwords"] = "0"*len(data["words"].decode(data["wenc"]).split("\t"))
+                self.send_form(res)
+            else:
+                self.send_response(404)
+                self.end_headers()
+        elif psplit.path=="/ac":
             ctype = self.headers.get('content-type')
             if ctype=="application/x-www-form-urlencoded":
                 data = self.parse_form()
@@ -454,8 +467,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile = Profile()
                         profile.pid = uid
                         db.insert_elements([gprofile, profile])
-                    if profile.devname != data["devname"] or profile.team != data.get("ingamesn", ""):
-                        profile.devname = data["devname"]
+                    if profile.devname != data.get("devname", "") or profile.team != data.get("ingamesn", ""):
+                        profile.devname = data.get("devname", "")
                         profile.team = data.get("ingamesn", "")
                         if REWIRE:
                             pf = db.get_elements(ProfileChange, {"devname": profile.devname, "team": profile.team}, limit=1)
@@ -473,6 +486,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile.game = GAME_DARKNESS
                     elif gamecd in ["YFTE", "YFTP", "YFTJ"]:
                         profile.game = GAME_TIME
+                    elif gamecd in ["WPAE", "WPAP", "WPAJ"]:
+                        profile.game = GAME_ARASHI
+                    elif gamecd in ["WPFE", "WPFP", "WPFJ"]:
+                        profile.game = GAME_HONOO
+                    elif gamecd in ["WPHE", "WPHP", "WPHJ"]:
+                        profile.game = GAME_HIKARI
                     else:
                         profile.game = 0
                     gprofile._token = gbsr+''.join([choice(TOKENPOOL) for i in range(48)])
@@ -484,10 +503,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                     res["challenge"] = gprofile._challenge #MAX 8
                     res["datetime"] = datetime.utcnow().strftime("%Y%m%d%H%M%S") #MAX 14
                     self.send_form(res)
-                elif data["action"]=="SVCLOC":
+                elif data["action"].lower()=="svcloc":
                     res = dict()
                     res["returncd"] = "007" #MAX 3
-                    res["svchost"] = "pokedungeonds.wondermail.net" #MAX 64
+                    res["svchost"] = BASEGAME+".wondermail.net" #MAX 64
                     res["statusdata"] = "Y" #MAX 1
                     res["servicetoken"] = "MyTokenWondermail" #MAX 300
                     self.send_form(res)
@@ -613,12 +632,20 @@ class CustomHandler(BaseHTTPRequestHandler):
 
         rescue_cards = []
         for rq in open_rescues:
-            if rq.game == 0:
+            if rq.game == GAME_TIME:
                 game = "Time"
-            elif rq.game == 1:
+            elif rq.game == GAME_DARKNESS:
                 game = "Darkness"
-            else:
+            elif rq.game == GAME_SKY:
                 game = "Sky"
+            elif rq.game == GAME_ARASHI:
+                game = "Tempest"
+            elif rq.game == GAME_HONOO:
+                game = "Wildfire"
+            elif rq.game == GAME_HIKARI:
+                game = "Radiance"
+            else:
+                game = "INVALID"
 
             title = rq.title
             if not title:

@@ -1,6 +1,15 @@
+MODE_DS = 0
+MODE_WII = 1
+
+# CHANGE THIS SETTING DEPENDING ON WHICH GAMES YOU SUPPORT (DS/WII)
+SERVER_MODE = MODE_DS
+
 GAME_TIME = 0
 GAME_DARKNESS = 1
 GAME_SKY = 2
+GAME_ARASHI = 3
+GAME_HONOO = 4
+GAME_HIKARI = 5
 
 DIR_DOWN = 0
 DIR_UP = 1
@@ -8,9 +17,22 @@ DIR_UP = 1
 UNIFIED_TABLES = ["globalprofile", "profile", "buddylist", "wmgamelist", "profilechange"]
 
 REWIRE = True
-SALT = b'TXqjDDOLhPySKSztgBHY'
-CHECKMASK = 0x613c4964
-BASEGAME = 'pokedungeonds'
+
+if SERVER_MODE==MODE_DS:
+    SALT = b'TXqjDDOLhPySKSztgBHY'
+    CHECKMASK = 0x613c4964
+    BASEGAME = 'pokedungeonds'
+    ENCODING = 'utf-16-le'
+elif SERVER_MODE==MODE_WII:
+    SALT = b'zjzrhOVXZKLHNspYpGoR'
+    CHECKMASK = 0x20556356
+    BASEGAME = 'pokedngnwii'
+    ENCODING = 'utf-16-be'
+else:
+    SALT = b'00000000000000000000'
+    CHECKMASK = 0x00000000
+    BASEGAME = 'invalid'
+    ENCODING = 'ascii'
 
 TOKENPOOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -20,13 +42,21 @@ SERVER_ADDR_PUBLIC_2 = "192.168.188.126" # Change this to your server public add
 
 RESOLVER = {
     "conntest.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
-    "pokedungeonds.available.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
     "nas.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
-    "gpcm.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
-    "pokedungeonds.master.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    "naswii.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
+    "gamestats.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
     "gamestats2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
+    "gpcm.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
     "gpsp.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
-    "pokedungeonds.wondermail.net": SERVER_ADDR_PUBLIC_2,
+    BASEGAME+".available.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.natneg1.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.natneg2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.natneg3.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.ms1.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.ms2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".master.ms3.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
+    BASEGAME+".wondermail.net": SERVER_ADDR_PUBLIC_2,
 }
 
 LANGTOID = {

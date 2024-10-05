@@ -1,6 +1,7 @@
 # Pelipper Test
 
 Python WFC re-implementation for PMD:Explorers.
+And now PMD:WiiWare.
 
 ## How to use
 
@@ -10,8 +11,10 @@ Clone this repository.
 You need python3 installed.
 Once installed, run `pip install -r requirements.txt`.
 
-In `structure/constants.py`, change SERVER_ADDR to your server's public ip
+In `structure/constants.py`, change `SERVER_ADDR` to your server's public ip
 (or local ip if you want to test it locally **Note: Never set it as 127.0.0.1 or localhost, use one of your network interface ip instead**)
+
+**NEW:** In `structure/constants.py`, you can also select `SERVER_MODE` between `MODE_DS` and `MODE_WII` for which game you want to support. **IMPORTANT** This decision must be made at setup time, you cannot support both games with the same setup.
 
 Run `python createdb.py` to create a new empty database. You can also run `python populatedb.py` to populate your database with some minimal data for Wonder Mail S support.
 
