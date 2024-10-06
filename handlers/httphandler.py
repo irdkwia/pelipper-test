@@ -205,7 +205,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                         rq = rq[0]
                         if new_path=="/rescue/rescueEntry.asp":
                             db.increment_count([rq], ["requested"])
-                        buffer += b'\x00\x00\x00\x01'+rq.getdata(prf.lang if prf.unified else None)[8:]
+                            buffer += b'\x00\x00\x00\x01'+rq.getdata(prf.lang if prf.unified else None)[8:]
+                        else:
+                            buffer += b'\x00\x00\x00\x01'+rq.getdata(prf.lang if prf.unified else None, 1)[8:]
                     else:
                         buffer += b'\x00\x00\x00\x00'
                 elif new_path=="/rescue/rescueList.asp":
@@ -220,7 +222,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     rlist = db.get_elements(RescueRequest, c, ["requested ASC" if method==2 else "udate DESC",], int.from_bytes(data[8:16], 'big'))
                     buffer += len(rlist).to_bytes(8, 'big')
                     for rq in rlist:
-                        buffer += rq.getdata(prf.lang if prf.unified else None)[:180]
+                        buffer += rq.getdata(prf.lang if prf.unified else None)
                 elif new_path=="/rescue/rescueRegist.asp":
                     rq = RescueRequest()
                     if select&0x8000000000000000:

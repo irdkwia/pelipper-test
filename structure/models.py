@@ -109,8 +109,8 @@ class RescueRequest:
         self.requested = 0
         self.private = 0
 
-    def getdata(self, langtarget):
-        subbuffer = bytearray(188)
+    def getdata(self, langtarget, entry=0):
+        subbuffer = bytearray(200+entry*8)
         subbuffer[0:8] = self.rid.to_bytes(8, 'big')
         subbuffer[8:16] = self.uid.to_bytes(8, 'big')
         subbuffer[32:52] = (escape_string(self.team)+'\x00'*(10-len(self.team))).encode("utf-16-le")
@@ -121,7 +121,7 @@ class RescueRequest:
         subbuffer[68:72] = unificate(self.lang, langtarget).to_bytes(4, 'big')
         subbuffer[72:108] = (escape_string(self.title)+'\x00'*(18-len(self.title))).encode("utf-16-be")
         subbuffer[108:180] = (escape_string(self.message)+'\x00'*(36-len(self.message))).encode("utf-16-be")
-        subbuffer[180:188] = (1).to_bytes(4, 'big')+(1).to_bytes(4, 'big')
+        subbuffer[180:188] = (entry).to_bytes(4, 'big')+(entry).to_bytes(4, 'big')
         return subbuffer
 
 class RescueAOK:
