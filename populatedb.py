@@ -18,7 +18,7 @@ if DEFAULT_WII:
     cur.execute(
         """
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
-        VALUES ("ZH5ufUAag38i6EJn", "pokedngnwii", "0", 0, 0)
+        VALUES ("ZH5ufUAag38i6EJn", "pokedngnwii", "0", 2, 0)
     """
     )
 

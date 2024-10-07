@@ -797,17 +797,17 @@ class CustomHandler(BaseHTTPRequestHandler):
                             element = wmlist[0].data
                         buffer += (
                             0x50443357 if wgame.version == GAME_SKY else 0x50443257
-                        ).to_bytes(4, "little")
+                        ).to_bytes(4, BYTE_ENCODING)
                         buffer += (
                             0x08261522 if wgame.version == GAME_SKY else 0x07070419
-                        ).to_bytes(4, "little")
+                        ).to_bytes(4, BYTE_ENCODING)
                         buffer += (
                             calcsum(SOURCE_WM, element)
                             if wgame.version == GAME_SKY
                             else calcsumsimple(element)
-                        ).to_bytes(4, "little")
+                        ).to_bytes(4, BYTE_ENCODING)
                         # LANG
-                        buffer += (int(data["contents"]) % 10).to_bytes(4, "little")
+                        buffer += (int(data["contents"]) % 10).to_bytes(4, BYTE_ENCODING)
                         buffer += bytes(0x10)
                         buffer += element
                     self.send_response(200)

@@ -29,16 +29,19 @@ if SERVER_MODE == MODE_DS:
     CHECKMASK = 0x613C4964
     BASEGAME = "pokedungeonds"
     ENCODING = "utf-16-le"
+    BYTE_ENCODING = "little"
 elif SERVER_MODE == MODE_WII:
     SALT = b"zjzrhOVXZKLHNspYpGoR"
     CHECKMASK = 0x20556356
     BASEGAME = "pokedngnwii"
     ENCODING = "utf-16-be"
+    BYTE_ENCODING = "big"
 else:
     SALT = b"00000000000000000000"
     CHECKMASK = 0x00000000
     BASEGAME = "invalid"
     ENCODING = "ascii"
+    BYTE_ENCODING = "little"
 
 TOKENPOOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
