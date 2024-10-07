@@ -3,9 +3,9 @@ import html
 from base64 import b64decode, b64encode
 from datetime import datetime
 from enum import Enum
-from hashlib import sha1
+from hashlib import md5, sha1
 from http.server import BaseHTTPRequestHandler
-from random import choice
+from random import choice, randrange
 from urllib.parse import parse_qs, urlparse
 
 import discord_bot
