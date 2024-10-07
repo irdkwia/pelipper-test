@@ -1,8 +1,9 @@
 from structure.database import *
 
+
 def format_floor(db, dungeon_id, floor):
     dng = db.get_elements(DungeonData, {"did": dungeon_id}, limit=1)
-    if len(dng)>0:
+    if len(dng) > 0:
         dungeon = dng[0].name
         direction = dng[0].direction
     else:

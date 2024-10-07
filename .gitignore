@@ -7,3 +7,5 @@ capture/
 
 database/
 .venv
+
+.idea

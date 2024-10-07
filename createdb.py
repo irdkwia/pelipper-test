@@ -1,7 +1,9 @@
-import sqlite3, os, sys
+import os
+import sqlite3
+import sys
 
-if len(sys.argv)>1:
-    listprefix = [x+"_" for x in sys.argv[1:]]
+if len(sys.argv) > 1:
+    listprefix = [x + "_" for x in sys.argv[1:]]
 else:
     listprefix = [""]
 
@@ -12,8 +14,9 @@ con = sqlite3.connect("database/pelipper.db")
 cur = con.cursor()
 
 for prefix in listprefix:
-    if prefix=="":
-        cur.execute("""
+    if prefix == "":
+        cur.execute(
+            """
             CREATE TABLE globalprofile (
                 token TEXT UNIQUE,
                 challenge TEXT,
@@ -49,10 +52,11 @@ for prefix in listprefix:
                 udate INTEGER NOT NULL,
                 PRIMARY KEY("gbsr","userid")
             )
-        """)
+        """
+        )
 
-
-        cur.execute("""
+        cur.execute(
+            """
             CREATE TABLE profile (
                 currenthash TEXT,
                 pid INTEGER NOT NULL PRIMARY KEY,
@@ -67,18 +71,22 @@ for prefix in listprefix:
                 unified INTEGER NOT NULL,
                 udate INTEGER NOT NULL
             )
-        """)
+        """
+        )
 
-        cur.execute("""
+        cur.execute(
+            """
             CREATE TABLE buddylist (
                 pid INTEGER NOT NULL,
                 buddy INTEGER NOT NULL,
                 udate INTEGER NOT NULL,
                 PRIMARY KEY("pid","buddy")
             )
-        """)
+        """
+        )
 
-        cur.execute("""
+        cur.execute(
+            """
             CREATE TABLE wmgamelist (
                 passwd TEXT NOT NULL PRIMARY KEY,
                 prefix TEXT NOT NULL,
@@ -86,9 +94,11 @@ for prefix in listprefix:
                 version INTEGER NOT NULL,
                 udate INTEGER NOT NULL
             )
-        """)
+        """
+        )
 
-        cur.execute("""
+        cur.execute(
+            """
             CREATE TABLE profilechange (
                 pid NOT NULL PRIMARY KEY,
                 team TEXT NOT NULL,
@@ -96,9 +106,11 @@ for prefix in listprefix:
                 udate INTEGER NOT NULL,
                 UNIQUE("team","devname")
             )
-        """)
+        """
+        )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE %steamdata (
             tid INTEGER NOT NULL UNIQUE,
             pid INTEGER,
@@ -109,10 +121,12 @@ for prefix in listprefix:
             private INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
-    """ % prefix)
+    """
+        % prefix
+    )
 
-
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE %srescuerequest (
             pid INTEGER NOT NULL,
             rid INTEGER NOT NULL PRIMARY KEY,
@@ -131,10 +145,12 @@ for prefix in listprefix:
             private INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
-    """ % prefix)
+    """
+        % prefix
+    )
 
-
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE %srescueaok (
             rid INTEGER NOT NULL PRIMARY KEY,
             uresp INTEGER NOT NULL,
@@ -149,10 +165,12 @@ for prefix in listprefix:
             udate INTEGER NOT NULL,
             rescuerpid INTEGER NOT NULL
         )
-    """ % prefix)
+    """
+        % prefix
+    )
 
-
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE %srescuethanks (
             rid INTEGER NOT NULL PRIMARY KEY,
             code INTEGER NOT NULL,
@@ -162,25 +180,33 @@ for prefix in listprefix:
             claimed INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
-    """ % prefix)
+    """
+        % prefix
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE %swmpasslist (
             wid INTEGER NOT NULL PRIMARY KEY,
             data BLOB NOT NULL,
             version INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
-    """ % prefix)
+    """
+        % prefix
+    )
 
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE %sdungeondata (
             did INTEGER NOT NULL PRIMARY KEY,
             name TEXT NOT NULL,
             direction INTEGER NOT NULL,
             udate INTEGER NOT NULL
         )
-    """ % prefix)
+    """
+        % prefix
+    )
 
 con.commit()
 con.close()

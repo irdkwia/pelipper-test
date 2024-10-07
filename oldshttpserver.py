@@ -4,13 +4,14 @@
 # which provides minimal support to run a WFC server with
 # now prohibited encryption settings
 
-from handlers.httphandler import *
-from http.server import HTTPServer
 import ssl
+from http.server import HTTPServer
+
+from handlers.httphandler import *
 
 context = ssl.SSLContext(ssl.PROTOCOL_SSLv3)
 context.set_ciphers("RC4-SHA")
-context.load_cert_chain(certfile='./cert/server.chain.crt', keyfile='./cert/server.key')
+context.load_cert_chain(certfile="./cert/server.chain.crt", keyfile="./cert/server.key")
 shttpserv = HTTPServer((SERVER_ADDR, 443), CustomHandler)
 
 shttpserv.socket = context.wrap_socket(shttpserv.socket, server_side=True)
