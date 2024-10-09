@@ -345,7 +345,7 @@ class CustomHandler(BaseHTTPRequestHandler):
 
                     potential_rescuers = db.get_elements(Profile, include=ptr_include)
                     for rescuer_prf in potential_rescuers:
-                        if rescuer_prf.pid != prf.pid:  # Skip yourself
+                        if rescuer_prf.pid == prf.pid:  # Skip yourself
                             continue
                         (ty, rescuer_identifier) = ProfileType.into_parts(
                             rescuer_prf.email
