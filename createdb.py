@@ -190,6 +190,7 @@ for prefix in listprefix:
             wid INTEGER NOT NULL PRIMARY KEY,
             data BLOB NOT NULL,
             version INTEGER NOT NULL,
+            prefix TEXT NOT NULL,
             udate INTEGER NOT NULL
         )
     """

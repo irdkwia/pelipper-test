@@ -232,6 +232,7 @@ class WMPassList:
         self.wid = 0
         self.data = bytes(17)
         self.version = GAME_SKY
+        self.prefix = ""
 
 
 class DungeonData:

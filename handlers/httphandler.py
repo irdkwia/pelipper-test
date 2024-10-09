@@ -776,7 +776,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                         for wm in wmlist:
                             for l in llist:
                                 buffer += (
-                                    str(l + wm.wid * 10)
+                                    (wm.prefix + "_" if wm.prefix else "")
+                                    + str(l + wm.wid * 10)
                                     + "\t"
                                     + b64encode(b"")
                                     .decode("ascii")
@@ -788,9 +789,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     + "\r\n"
                                 ).encode("ascii")
                     elif data["action"] == "contents":
-                        wmlist = db.get_elements(
-                            WMPassList, {"wid": int(data["contents"]) // 10}
-                        )
+                        fileid = int(data["contents"].split("_")[-1])
+                        wmlist = db.get_elements(WMPassList, {"wid": fileid // 10})
                         if len(wmlist) == 0:
                             element = bytes(0)
                         else:
@@ -807,7 +807,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                             else calcsumsimple(element)
                         ).to_bytes(4, BYTE_ENCODING)
                         # LANG
-                        buffer += (int(data["contents"]) % 10).to_bytes(4, BYTE_ENCODING)
+                        buffer += (fileid % 10).to_bytes(4, BYTE_ENCODING)
                         buffer += bytes(0x10)
                         buffer += element
                     self.send_response(200)

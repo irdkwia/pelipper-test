@@ -4,8 +4,8 @@ con = sqlite3.connect("../database/pelipper.db")
 cursor = con.cursor()
 cursor.execute(
     """
-    ALTER TABLE rescueaok
-    ADD COLUMN rescuerpid INTEGER NOT NULL DEFAULT 0
+    ALTER TABLE wmpasslist
+    ADD COLUMN prefix INTEGER NOT NULL DEFAULT ""
 """
 )
 con.commit()
