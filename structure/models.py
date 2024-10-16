@@ -5,6 +5,8 @@ from structure.tools import escape_string
 def unificate(langorg, langtarget=None):
     if langorg == 0:
         return 0
+    elif langtarget == 0:
+        return langorg
     elif langtarget is not None:
         return langtarget
     return langorg
