@@ -364,6 +364,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     ),
                                     discord_bot.bot.loop,
                                 )
+                        elif ty == ProfileType.EMAIL:
+                            pass  # TODO: Implement sending SOS email
 
                 elif new_path == "/rescue/rescueComplete.asp":
                     rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
@@ -410,7 +412,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 )
                                 if rescued_ty == ProfileType.DISCORD:
                                     rescued_user_name = rescued_identifier
-                                    if rescued_prf.flags & 0x40000:
+
+                                if rescued_prf.flags & 0x40000:
+                                    if rescued_ty == ProfileType.DISCORD:
                                         if discord_bot.enabled:
                                             asyncio.run_coroutine_threadsafe(
                                                 discord_bot.send_aok(
@@ -427,6 +431,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 ),
                                                 discord_bot.bot.loop,
                                             )
+                                    elif rescued_ty == ProfileType.EMAIL:
+                                        pass  # TODO: Implement sending A-OK email
                                 # Sending A-OK to everyone
                                 if discord_bot.enabled:
                                     asyncio.run_coroutine_threadsafe(
@@ -490,6 +496,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                                             ),
                                             discord_bot.bot.loop,
                                         )
+                                elif ty == ProfileType.EMAIL:
+                                    pass  # TODO: Implement sending Thank-You email
 
                 elif new_path == "/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
@@ -512,24 +520,29 @@ class CustomHandler(BaseHTTPRequestHandler):
                     scode = int.from_bytes(data[0x52:0x54], "big")
                     if scode == 0xFFFF:
                         success = False
+                        # Compute full code, must be sent to email address
+                        scode = randrange(9999) + 1
+                        full_code = "%03d-%04d" % (ccode, scode)
+                        print("Code: " + full_code)
 
                         (ty, identifier) = ProfileType.into_parts(email)
-                        if discord_bot.enabled and ty == ProfileType.DISCORD:
-                            # If the entered email is not a real email address, treat it as a Discord ID/user name
-                            scode = randrange(9999) + 1
-                            full_code = "%03d-%04d" % (ccode, scode)
-                            print("Code: " + full_code)
+                        if ty == ProfileType.DISCORD:
+                            if discord_bot.enabled:
+                                # If the entered email is not a real email address, treat it as a Discord ID/user name
+                                try:
+                                    future = asyncio.run_coroutine_threadsafe(
+                                        discord_bot.send_signup_code(
+                                            identifier, full_code
+                                        ),
+                                        discord_bot.bot.loop,
+                                    )
+                                    future.result(10)
 
-                            try:
-                                future = asyncio.run_coroutine_threadsafe(
-                                    discord_bot.send_signup_code(identifier, full_code),
-                                    discord_bot.bot.loop,
-                                )
-                                future.result(10)
-
-                                success = True
-                            except Exception as error:
-                                print(error)
+                                    success = True
+                                except Exception as error:
+                                    print(error)
+                        elif ty == ProfileType.EMAIL:
+                            pass  # TODO: Implement email registration
 
                         if success:
                             buffer += b"\x00\x00\x00\x01"
