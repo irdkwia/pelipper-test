@@ -4,7 +4,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from structure.dungeon_formatter import *
+from structure.constants import DISCORD_TOKEN, DISCORD_UPDATE_CHANNEL_ID
 
 description = """A bot that notifies users about WFC events in PMD: Explorers of Sky, such as dungeon rescues."""
 
@@ -17,8 +17,7 @@ async def send_signup_code(username_or_id: str, signup_code: str):
     user = await get_user_by_username_or_id(username_or_id)
     if user:
         await user.send(
-            "Welcome to the Pelipper notification service!\n\nYour sign-up code is: "
-            + signup_code
+            f"Welcome to the Pelipper notification service!\n\nYour sign-up code is: {signup_code}"
         )
     else:
         raise Exception("Failed to find user: " + username_or_id)
@@ -134,7 +133,7 @@ async def send_aok_global(
 
 
 async def send_aok(
-    rescued_username_or_id: Optional[str],
+    rescued_username_or_id: str,
     rescuer_username_or_id: Optional[str],
     rescued_team: str,
     rescuer_team: str,

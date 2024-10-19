@@ -1,7 +1,6 @@
-from base64 import b64decode, b64encode
 from hashlib import md5
-from random import choice, randrange
-from socketserver import BaseRequestHandler, TCPServer
+from random import choice
+from socketserver import BaseRequestHandler
 
 from structure.database import *
 

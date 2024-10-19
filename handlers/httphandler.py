@@ -2,14 +2,14 @@ import asyncio
 import html
 from base64 import b64decode, b64encode
 from datetime import datetime
-from enum import Enum
 from hashlib import md5, sha1
 from http.server import BaseHTTPRequestHandler
 from random import choice, randrange
 from urllib.parse import parse_qs, urlparse
 
-from mail import discord_bot
-from structure.dungeon_formatter import *
+from mail import discord_bot, plain
+from mail.type import ProfileType
+from structure.formatter import *
 from structure.models import *
 from structure.tools import *
 
@@ -19,7 +19,8 @@ CAPTURE = False
 
 
 class CustomHandler(BaseHTTPRequestHandler):
-    def conndigest(self, data, out=False):
+    @staticmethod
+    def conndigest(data, out=False):
         return sha1(SALT + data + (SALT if out else b"")).hexdigest()
 
     def attributes(self):
@@ -42,7 +43,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                 data[k] = s.decode("ascii")
         return data
 
-    def send_form(self, data, headers=dict()):
+    def send_form(self, data, headers=None):
+        if headers is None:
+            headers = dict()
         buffer = bytearray()
         for k, v in data.items():
             if len(buffer) > 0:
@@ -265,11 +268,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                         i = None
                     rlist = db.get_elements(
                         RescueRequest,
-                        c,
-                        [
+                        conditions=c,
+                        include=i,
+                        ordering=[
                             "requested ASC" if method == 2 else "udate DESC",
                         ],
-                        int.from_bytes(data[8:16], "big"),
+                        limit=int.from_bytes(data[8:16], "big"),
                     )
                     buffer += len(rlist).to_bytes(8, "big")
                     for rq in rlist:
@@ -285,7 +289,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         int.from_bytes(
                             md5(
                                 pid.to_bytes(4, "big")
-                                + bytes(randrange(256) for i in range(252))
+                                + bytes(randrange(256) for _ in range(252))
                             ).digest(),
                             "big",
                         )
@@ -365,7 +369,16 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     discord_bot.bot.loop,
                                 )
                         elif ty == ProfileType.EMAIL:
-                            pass  # TODO: Implement sending SOS email
+                            asyncio.run(
+                                plain.send_sos(
+                                    rescuer_identifier,
+                                    rq.team,
+                                    rq.title,
+                                    rq.message,
+                                    format_floor(db, rq.dungeon, rq.floor),
+                                    format_rescue_code(rq.rid),
+                                )
+                            )
 
                 elif new_path == "/rescue/rescueComplete.asp":
                     rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
@@ -418,7 +431,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                         if discord_bot.enabled:
                                             asyncio.run_coroutine_threadsafe(
                                                 discord_bot.send_aok(
-                                                    rescued_user_name,
+                                                    rescued_identifier,
                                                     rescuer_user_name,
                                                     rq.team,
                                                     aok.team,
@@ -432,7 +445,17 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 discord_bot.bot.loop,
                                             )
                                     elif rescued_ty == ProfileType.EMAIL:
-                                        pass  # TODO: Implement sending A-OK email
+                                        asyncio.run(
+                                            plain.send_aok(
+                                                rescued_identifier,
+                                                rq.team,
+                                                aok.team,
+                                                aok.title,
+                                                aok.message,
+                                                format_floor(db, rq.dungeon, rq.floor),
+                                                format_rescue_code(rq.rid),
+                                            )
+                                        )
                                 # Sending A-OK to everyone
                                 if discord_bot.enabled:
                                     asyncio.run_coroutine_threadsafe(
@@ -497,7 +520,13 @@ class CustomHandler(BaseHTTPRequestHandler):
                                             discord_bot.bot.loop,
                                         )
                                 elif ty == ProfileType.EMAIL:
-                                    pass  # TODO: Implement sending Thank-You email
+                                    asyncio.run(
+                                        plain.send_thank_you(
+                                            rescuer_identifier,
+                                            thk.title,
+                                            thk.message,
+                                        )
+                                    )
 
                 elif new_path == "/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
@@ -511,7 +540,6 @@ class CustomHandler(BaseHTTPRequestHandler):
                     else:
                         buffer += b"\x00\x00\x00\x00"
                 elif new_path == "/common/setProfile.asp":
-                    action = select >> 32
                     prf.lang = select & 0xFFFFFFFF
                     prf.flags = int.from_bytes(data[0x38:0x3C], "big")
                     prf.team = data[0x3C:0x50].decode("utf-16-le").replace("\x00", "")
@@ -542,7 +570,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 except Exception as error:
                                     print(error)
                         elif ty == ProfileType.EMAIL:
-                            pass  # TODO: Implement email registration
+                            asyncio.run(plain.send_signup_code(identifier, full_code))
+                            success = True
 
                         if success:
                             buffer += b"\x00\x00\x00\x01"
@@ -603,7 +632,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(buffer)
             else:
-                prf.currenthash = "".join([choice(TOKENPOOL) for i in range(32)])
+                prf.currenthash = "".join([choice(TOKENPOOL) for _ in range(32)])
                 db.update_elements([prf])
                 self.send_response(200)
                 self.send_header("Content-Length", "32")
@@ -668,9 +697,6 @@ class CustomHandler(BaseHTTPRequestHandler):
                             db.delete_elements(
                                 GlobalProfile, {"gbsr": "", "userid": userid}
                             )
-                            gprofile = elist[0]
-                        else:
-                            gprofile = GlobalProfile()
                         uid = (
                             int.from_bytes(
                                 md5(
@@ -732,9 +758,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                     else:
                         profile.game = 0
                     gprofile._token = gbsr + "".join(
-                        [choice(TOKENPOOL) for i in range(48)]
+                        [choice(TOKENPOOL) for _ in range(48)]
                     )
-                    gprofile._challenge = "".join([choice(TOKENPOOL) for i in range(8)])
+                    gprofile._challenge = "".join([choice(TOKENPOOL) for _ in range(8)])
                     db.update_elements([gprofile, profile])
                     res["returncd"] = "001"  # MAX 3
                     res["token"] = gprofile._token  # MAX 300
@@ -787,10 +813,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                         )
                         # ID    BUFFER  NAME  NAME  NAME    NB
                         for wm in wmlist:
-                            for l in llist:
+                            for line in llist:
                                 buffer += (
                                     (wm.prefix + "_" if wm.prefix else "")
-                                    + str(l + wm.wid * 10)
+                                    + str(line + wm.wid * 10)
                                     + "\t"
                                     + b64encode(b"")
                                     .decode("ascii")
@@ -896,7 +922,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                             )
                     else:
                         buffer = buffer % (b"white", b"red", b"Invalid form data")
-                except:
+                except Exception:
                     buffer = buffer % (b"white", b"red", b"Invalid form data")
             else:
                 buffer = buffer % (b"black", b"white", b"")
@@ -909,7 +935,8 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
-    def render_index_page(self):
+    @staticmethod
+    def render_index_page():
         with open("static/templates/main.html", encoding="utf-8") as file:
             main_template = file.read()
 
@@ -961,7 +988,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             if not message:
                 message = "We were defeated! Please help!"
 
-            vars = {
+            params = {
                 "title": title,
                 "dungeon": format_floor(db, rq.dungeon, rq.floor),
                 "code": format_rescue_code(rq.rid),
@@ -969,10 +996,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                 "game": game,
                 "message": message,
             }
-            card = rescue_template.format(**vars)
+            card = rescue_template.format(**params)
             rescue_cards.append(card)
 
-        vars = {
+        params = {
             "server_addr": SERVER_ADDR,
             "profile_count": profile_count,
             "sos_mail_count": sos_mail_count,
@@ -988,27 +1015,4 @@ class CustomHandler(BaseHTTPRequestHandler):
                 else ""
             ),
         }
-        return main_template.format(**vars).encode("utf-8")
-
-
-class ProfileType(Enum):
-    UNKNOWN = 0
-    EMAIL = 1
-    DISCORD = 2
-
-    @staticmethod
-    def into_parts(combined_name: str):
-        if not combined_name:
-            return (ProfileType.UNKNOWN, combined_name)
-
-        if combined_name.startswith("&discord&"):
-            return (ProfileType.DISCORD, combined_name[9:])
-        elif "@" in combined_name:
-            return (ProfileType.EMAIL, combined_name)
-        else:
-            return (ProfileType.UNKNOWN, combined_name)
-
-
-def format_rescue_code(rid):
-    rid_str = f"{rid:012d}"
-    return f"{rid_str[:4]}-{rid_str[4:8]}-{rid_str[8:]}"
+        return main_template.format(**params).encode("utf-8")

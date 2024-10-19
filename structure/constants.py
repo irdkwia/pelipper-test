@@ -77,10 +77,17 @@ LANGTOID = {
     "spanish": 5,
 }
 
+# Discord
 # Enter an optional Discord bot token here
 DISCORD_TOKEN = None
 # A channel ID to post SOS mail to, or `None` if no updates should be posted
 DISCORD_UPDATE_CHANNEL_ID = None
+
+# Plain Email
+# Enter an optional email sender account as a tuple (email, password)
+EMAIL_ACCOUNT = None
+# SMTP server as a tuple (host, port), e.g. ('smtp.gmail.com', 465)
+EMAIL_SMTP_SERVER = None
 
 # MAILTY MISSIONTYPE MISSIONSPEC CLIENT TARGET TGITEM RWDTYPE RWDITEM RSTTYPE RSTARG FLVTEXT DUN FLOOR
 MISSION_FIELDS = [4, 4, 4, 11, 11, 10, 4, 11, 1, 11, 24, 8, 8]
