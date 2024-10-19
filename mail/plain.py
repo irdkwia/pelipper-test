@@ -5,7 +5,7 @@ from structure.constants import EMAIL_ACCOUNT, EMAIL_SMTP_SERVER
 
 
 async def send_smtp(email: str, subject: str, body: str):
-    msg = MIMEText(body, 'html')
+    msg = MIMEText(body, "html")
     msg["Subject"] = subject
     msg["From"] = EMAIL_ACCOUNT[0]
     msg["To"] = email

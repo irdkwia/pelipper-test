@@ -369,16 +369,17 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     discord_bot.bot.loop,
                                 )
                         elif ty == ProfileType.EMAIL:
-                            asyncio.run(
-                                plain.send_sos(
-                                    rescuer_identifier,
-                                    rq.team,
-                                    rq.title,
-                                    rq.message,
-                                    format_floor(db, rq.dungeon, rq.floor),
-                                    format_rescue_code(rq.rid),
+                            if plain.enabled:
+                                asyncio.run(
+                                    plain.send_sos(
+                                        rescuer_identifier,
+                                        rq.team,
+                                        rq.title,
+                                        rq.message,
+                                        format_floor(db, rq.dungeon, rq.floor),
+                                        format_rescue_code(rq.rid),
+                                    )
                                 )
-                            )
 
                 elif new_path == "/rescue/rescueComplete.asp":
                     rq = db.get_elements(RescueRequest, {"rid": select}, limit=1)
@@ -445,17 +446,20 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 discord_bot.bot.loop,
                                             )
                                     elif rescued_ty == ProfileType.EMAIL:
-                                        asyncio.run(
-                                            plain.send_aok(
-                                                rescued_identifier,
-                                                rq.team,
-                                                aok.team,
-                                                aok.title,
-                                                aok.message,
-                                                format_floor(db, rq.dungeon, rq.floor),
-                                                format_rescue_code(rq.rid),
+                                        if plain.enabled:
+                                            asyncio.run(
+                                                plain.send_aok(
+                                                    rescued_identifier,
+                                                    rq.team,
+                                                    aok.team,
+                                                    aok.title,
+                                                    aok.message,
+                                                    format_floor(
+                                                        db, rq.dungeon, rq.floor
+                                                    ),
+                                                    format_rescue_code(rq.rid),
+                                                )
                                             )
-                                        )
                                 # Sending A-OK to everyone
                                 if discord_bot.enabled:
                                     asyncio.run_coroutine_threadsafe(
@@ -520,13 +524,14 @@ class CustomHandler(BaseHTTPRequestHandler):
                                             discord_bot.bot.loop,
                                         )
                                 elif ty == ProfileType.EMAIL:
-                                    asyncio.run(
-                                        plain.send_thank_you(
-                                            rescuer_identifier,
-                                            thk.title,
-                                            thk.message,
+                                    if plain.enabled:
+                                        asyncio.run(
+                                            plain.send_thank_you(
+                                                rescuer_identifier,
+                                                thk.title,
+                                                thk.message,
+                                            )
                                         )
-                                    )
 
                 elif new_path == "/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
@@ -570,8 +575,11 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 except Exception as error:
                                     print(error)
                         elif ty == ProfileType.EMAIL:
-                            asyncio.run(plain.send_signup_code(identifier, full_code))
-                            success = True
+                            if plain.enabled:
+                                asyncio.run(
+                                    plain.send_signup_code(identifier, full_code)
+                                )
+                                success = True
 
                         if success:
                             buffer += b"\x00\x00\x00\x01"
