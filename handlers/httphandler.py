@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler
 from random import choice, randrange
 from urllib.parse import parse_qs, urlparse
 
-import discord_bot
+from mail import discord_bot
 from structure.dungeon_formatter import *
 from structure.models import *
 from structure.tools import *
