@@ -557,7 +557,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                         buffer += b"\x00\x00\x00\x00"
                 elif new_path == "/common/setProfile.asp":
                     prf.lang = select & 0xFFFFFFFF
-                    prf.flags = int.from_bytes(data[0x38:0x3C], "big")
+                    pflag = int.from_bytes(data[0x38:0x3A], "big")
+                    prf.flags = pflag & 0xE0000
                     prf.team = data[0x3C:0x50].decode("utf-16-le").replace("\x00", "")
                     ccode = int.from_bytes(data[0x50:0x52], "big")
                     email = data[:0x38].decode("ascii").replace("\x00", "")
@@ -605,8 +606,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                         if pid in TEMP_CHANGE:
                             del TEMP_CHANGE[pid]
                         buffer += b"\x00\x00\x00\x01"
-                    elif pid in TEMP_CHANGE:
-                        if TEMP_CHANGE[pid][0] != email or TEMP_CHANGE[pid][1] != scode:
+                    elif pid in TEMP_CHANGE or pflag & 1:
+                        if not pflag & 1 and (
+                            TEMP_CHANGE[pid][0] != email or TEMP_CHANGE[pid][1] != scode
+                        ):
                             buffer += b"\x00\x00\x00\x01"
                             TEMP_CHANGE[pid][2] += 1
                             if TEMP_CHANGE[pid][2] >= 3:
@@ -617,7 +620,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                             prf.email = email
                             prf.ccode = ccode
                             prf.scode = scode
-                            del TEMP_CHANGE[pid]
+                            if pflag & 1:
+                                del TEMP_CHANGE[pid]
                     else:
                         buffer += b"\x00\x00\x00\x01"
                 else:
