@@ -30,18 +30,24 @@ if SERVER_MODE == MODE_DS:
     BASEGAME = "pokedungeonds"
     ENCODING = "utf-16-le"
     BYTE_ENCODING = "little"
+    # Email transcoding
+    EMAIL_TRANSCO = {}
 elif SERVER_MODE == MODE_WII:
     SALT = b"zjzrhOVXZKLHNspYpGoR"
     CHECKMASK = 0x20556356
     BASEGAME = "pokedngnwii"
     ENCODING = "utf-16-be"
     BYTE_ENCODING = "big"
+    # Email transcoding
+    EMAIL_TRANSCO = {"@wii.com": "@rc24.xyz"}
 else:
     SALT = b"00000000000000000000"
     CHECKMASK = 0x00000000
     BASEGAME = "invalid"
     ENCODING = "ascii"
     BYTE_ENCODING = "little"
+    # Email transcoding
+    EMAIL_TRANSCO = {}
 
 TOKENPOOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
