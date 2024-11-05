@@ -620,7 +620,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                             prf.email = email
                             prf.ccode = ccode
                             prf.scode = scode
-                            if pflag & 1:
+                            if not pflag & 1:
                                 del TEMP_CHANGE[pid]
                     else:
                         buffer += b"\x00\x00\x00\x01"
