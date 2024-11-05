@@ -557,7 +557,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         buffer += b"\x00\x00\x00\x00"
                 elif new_path == "/common/setProfile.asp":
                     prf.lang = select & 0xFFFFFFFF
-                    pflag = int.from_bytes(data[0x38:0x3A], "big")
+                    pflag = int.from_bytes(data[0x38:0x3C], "big")
                     prf.flags = pflag & 0xE0000
                     prf.team = data[0x3C:0x50].decode("utf-16-le").replace("\x00", "")
                     ccode = int.from_bytes(data[0x50:0x52], "big")
