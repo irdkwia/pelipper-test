@@ -1,6 +1,7 @@
 from email.mime.text import MIMEText
 from smtplib import SMTP_SSL
 
+from prettifier.prettify import make_pretty
 from structure.constants import EMAIL_ACCOUNT, EMAIL_SMTP_SERVER
 
 
@@ -29,15 +30,16 @@ async def send_sos(
     message: str,
     dungeon_info: str,
     code: str,
+    lang: int,
 ):
     body = f"<p>You've received an SOS Mail from Team {team}!</p>"
     body += f"<p>Team Name: {team}</p>"
     body += f"<p>Dungeon: {dungeon_info}</p>"
     body += f"<p>Rescue Number: {code}</p>"
     if title:
-        body += f"<p>Title: {title}</p>"
+        body += f"<p>Title: {make_pretty(title, lang)}</p>"
     if message:
-        body += f"<p>Message: {message}</p>"
+        body += f"<p>Message: {make_pretty(message, lang)}</p>"
     await send_smtp(rescuer_email, "New SOS Mail", body)
 
 
@@ -49,6 +51,7 @@ async def send_aok(
     message: str,
     dungeon_info: str,
     code: str,
+    lang: int,
 ):
     body = f"<p>You've received an A-OK Mail from Team {rescuer_team}!</p>"
     body += f"<p>Rescued Team: {rescued_team}</p>"
@@ -56,18 +59,18 @@ async def send_aok(
     body += f"<p>Dungeon: {dungeon_info}</p>"
     body += f"<p>Rescue Number: {code}</p>"
     if title:
-        body += f"<p>Title: {title}</p>"
+        body += f"<p>Title: {make_pretty(title, lang)}</p>"
     if message:
-        body += f"<p>Message: {message}</p>"
+        body += f"<p>Message: {make_pretty(message, lang)}</p>"
     await send_smtp(rescued_email, "New A-OK Mail", body)
 
 
-async def send_thank_you(rescuer_email: str, title: str, message: str):
+async def send_thank_you(rescuer_email: str, title: str, message: str, lang: int):
     body = f"<p>You've received a Thank-You Mail!</p>"
     if title:
-        body += f"<p>Title: {title}</p>"
+        body += f"<p>Title: {make_pretty(title, lang)}</p>"
     if message:
-        body += f"<p>Message: {message}</p>"
+        body += f"<p>Message: {make_pretty(message, lang)}</p>"
     await send_smtp(rescuer_email, "New Thank-You Mail", body)
 
 

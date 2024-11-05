@@ -327,6 +327,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 rq.message,
                                 format_floor(db, rq.dungeon, rq.floor),
                                 format_rescue_code(rq.rid),
+                                prf.lang,
                             ),
                             discord_bot.bot.loop,
                         )
@@ -370,6 +371,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                         rq.message,
                                         format_floor(db, rq.dungeon, rq.floor),
                                         format_rescue_code(rq.rid),
+                                        prf.lang,
                                     ),
                                     discord_bot.bot.loop,
                                 )
@@ -383,6 +385,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                         rq.message,
                                         format_floor(db, rq.dungeon, rq.floor),
                                         format_rescue_code(rq.rid),
+                                        prf.lang,
                                     )
                                 )
 
@@ -449,6 +452,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                         db, rq.dungeon, rq.floor
                                                     ),
                                                     format_rescue_code(rq.rid),
+                                                    prf.lang,
                                                 ),
                                                 discord_bot.bot.loop,
                                             )
@@ -465,6 +469,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                         db, rq.dungeon, rq.floor
                                                     ),
                                                     format_rescue_code(rq.rid),
+                                                    prf.lang,
                                                 )
                                             )
                                 # Sending A-OK to everyone
@@ -479,6 +484,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                             aok.message,
                                             format_floor(db, rq.dungeon, rq.floor),
                                             format_rescue_code(rq.rid),
+                                            prf.lang,
                                         ),
                                         discord_bot.bot.loop,
                                     )
@@ -531,6 +537,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 rescuer_identifier,
                                                 thk.title,
                                                 thk.message,
+                                                prf.lang,
                                             ),
                                             discord_bot.bot.loop,
                                         )
@@ -541,6 +548,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 rescuer_identifier,
                                                 thk.title,
                                                 thk.message,
+                                                prf.lang,
                                             )
                                         )
 
