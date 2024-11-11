@@ -1,9 +1,9 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from smtplib import SMTP_SSL
+from smtplib import SMTP, SMTP_SSL
 
 from prettifier.prettify import make_pretty
-from structure.constants import EMAIL_ACCOUNT, EMAIL_SMTP_SERVER
+from structure.constants import EMAIL_ACCOUNT, EMAIL_SMTP_SERVER, EMAIL_USE_TLS
 
 
 def render_plain(body):
@@ -49,8 +49,11 @@ async def send_smtp(email: str, subject: str, body: list):
     msg["Subject"] = subject
     msg["From"] = EMAIL_ACCOUNT[0]
     msg["To"] = email
-    with SMTP_SSL(EMAIL_SMTP_SERVER[0], EMAIL_SMTP_SERVER[1]) as smtp:
-        smtp.login(EMAIL_ACCOUNT[0], EMAIL_ACCOUNT[1])
+
+    SMTPClass = SMTP_SSL if EMAIL_USE_TLS else SMTP
+    with SMTPClass(EMAIL_SMTP_SERVER[0], EMAIL_SMTP_SERVER[1]) as smtp:
+        if EMAIL_ACCOUNT is not None:
+            smtp.login(EMAIL_ACCOUNT[0], EMAIL_ACCOUNT[1])
         smtp.sendmail(EMAIL_ACCOUNT[0], [email], msg.as_string())
 
 
