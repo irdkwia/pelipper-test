@@ -84,6 +84,8 @@ DISCORD_TOKEN = None
 DISCORD_UPDATE_CHANNEL_ID = None
 
 # Plain Email
+# Whether to use TLS for sending emails
+EMAIL_USE_TLS = True
 # Enter an optional email sender account as a tuple (email, password)
 EMAIL_ACCOUNT = None
 # SMTP server as a tuple (host, port), e.g. ('smtp.gmail.com', 465)
