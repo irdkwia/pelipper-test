@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlparse
 
 from mail import discord_bot, plain
 from mail.type import ProfileType
+from prettifier.prettify import make_pretty, translate
 from structure.formatter import *
 from structure.models import *
 from structure.tools import *
@@ -303,8 +304,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                     rq.team = prf.team
                     rq.game = prf.game
                     rq.lang = prf.lang
-                    rq.title = data[32:68].decode("utf-16-be").replace("\x00", "")
-                    rq.message = data[68:140].decode("utf-16-be").replace("\x00", "")
+                    rq.title = translate(
+                        data[32:68].decode("utf-16-be").replace("\x00", ""), prf.lang
+                    )
+                    rq.message = translate(
+                        data[68:140].decode("utf-16-be").replace("\x00", ""), prf.lang
+                    )
                     buffer += rq.rid.to_bytes(8, "big")
                     db.insert_elements([rq])
 
@@ -322,6 +327,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 rq.message,
                                 format_floor(db, rq.dungeon, rq.floor),
                                 format_rescue_code(rq.rid),
+                                prf.lang,
                             ),
                             discord_bot.bot.loop,
                         )
@@ -365,6 +371,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                         rq.message,
                                         format_floor(db, rq.dungeon, rq.floor),
                                         format_rescue_code(rq.rid),
+                                        prf.lang,
                                     ),
                                     discord_bot.bot.loop,
                                 )
@@ -378,6 +385,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                         rq.message,
                                         format_floor(db, rq.dungeon, rq.floor),
                                         format_rescue_code(rq.rid),
+                                        prf.lang,
                                     )
                                 )
 
@@ -397,11 +405,13 @@ class CustomHandler(BaseHTTPRequestHandler):
                             aok.game = prf.game
                             aok.lang = prf.lang
                             aok.rescuerpid = prf.pid
-                            aok.title = (
-                                data[92:128].decode("utf-16-be").replace("\x00", "")
+                            aok.title = translate(
+                                data[92:128].decode("utf-16-be").replace("\x00", ""),
+                                prf.lang,
                             )
-                            aok.message = (
-                                data[128:200].decode("utf-16-be").replace("\x00", "")
+                            aok.message = translate(
+                                data[128:200].decode("utf-16-be").replace("\x00", ""),
+                                prf.lang,
                             )
                             db.insert_elements([aok])
                             buffer += b"\x00\x00\x00\x01"
@@ -442,6 +452,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                         db, rq.dungeon, rq.floor
                                                     ),
                                                     format_rescue_code(rq.rid),
+                                                    prf.lang,
                                                 ),
                                                 discord_bot.bot.loop,
                                             )
@@ -458,6 +469,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                         db, rq.dungeon, rq.floor
                                                     ),
                                                     format_rescue_code(rq.rid),
+                                                    prf.lang,
                                                 )
                                             )
                                 # Sending A-OK to everyone
@@ -472,6 +484,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                             aok.message,
                                             format_floor(db, rq.dungeon, rq.floor),
                                             format_rescue_code(rq.rid),
+                                            prf.lang,
                                         ),
                                         discord_bot.bot.loop,
                                     )
@@ -493,8 +506,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                     thk = RescueThanks()
                     thk.rid = select
                     thk.item = data[0:4]
-                    thk.title = data[4:40].decode("utf-16-be").replace("\x00", "")
-                    thk.message = data[40:112].decode("utf-16-be").replace("\x00", "")
+                    thk.title = translate(
+                        data[4:40].decode("utf-16-be").replace("\x00", ""), prf.lang
+                    )
+                    thk.message = translate(
+                        data[40:112].decode("utf-16-be").replace("\x00", ""), prf.lang
+                    )
                     db.insert_elements([thk])
 
                     buffer += b"\x00\x00\x00\x00"
@@ -520,6 +537,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 rescuer_identifier,
                                                 thk.title,
                                                 thk.message,
+                                                prf.lang,
                                             ),
                                             discord_bot.bot.loop,
                                         )
@@ -530,6 +548,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 rescuer_identifier,
                                                 thk.title,
                                                 thk.message,
+                                                prf.lang,
                                             )
                                         )
 
@@ -546,7 +565,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                         buffer += b"\x00\x00\x00\x00"
                 elif new_path == "/common/setProfile.asp":
                     prf.lang = select & 0xFFFFFFFF
-                    prf.flags = int.from_bytes(data[0x38:0x3C], "big")
+                    pflag = int.from_bytes(data[0x38:0x3C], "big")
+                    prf.flags = pflag & 0xE0000
                     prf.team = data[0x3C:0x50].decode("utf-16-le").replace("\x00", "")
                     ccode = int.from_bytes(data[0x50:0x52], "big")
                     email = data[:0x38].decode("ascii").replace("\x00", "")
@@ -594,8 +614,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                         if pid in TEMP_CHANGE:
                             del TEMP_CHANGE[pid]
                         buffer += b"\x00\x00\x00\x01"
-                    elif pid in TEMP_CHANGE:
-                        if TEMP_CHANGE[pid][0] != email or TEMP_CHANGE[pid][1] != scode:
+                    elif pid in TEMP_CHANGE or pflag & 1:
+                        if not pflag & 1 and (
+                            TEMP_CHANGE[pid][0] != email or TEMP_CHANGE[pid][1] != scode
+                        ):
                             buffer += b"\x00\x00\x00\x01"
                             TEMP_CHANGE[pid][2] += 1
                             if TEMP_CHANGE[pid][2] >= 3:
@@ -606,7 +628,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                             prf.email = email
                             prf.ccode = ccode
                             prf.scode = scode
-                            del TEMP_CHANGE[pid]
+                            if not pflag & 1:
+                                del TEMP_CHANGE[pid]
                     else:
                         buffer += b"\x00\x00\x00\x01"
                 else:
@@ -997,12 +1020,12 @@ class CustomHandler(BaseHTTPRequestHandler):
                 message = "We were defeated! Please help!"
 
             params = {
-                "title": title,
+                "title": make_pretty(title, rq.lang),
                 "dungeon": format_floor(db, rq.dungeon, rq.floor),
                 "code": format_rescue_code(rq.rid),
                 "team": rq.team,
                 "game": game,
-                "message": message,
+                "message": make_pretty(message, rq.lang),
             }
             card = rescue_template.format(**params)
             rescue_cards.append(card)

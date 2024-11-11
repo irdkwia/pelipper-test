@@ -4,6 +4,7 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
+from prettifier.prettify import make_pretty
 from structure.constants import DISCORD_TOKEN, DISCORD_UPDATE_CHANNEL_ID
 
 description = """A bot that notifies users about WFC events in PMD: Explorers of Sky, such as dungeon rescues."""
@@ -30,6 +31,7 @@ async def send_sos_global(
     message: str,
     dungeon_info: str,
     code: str,
+    lang: int,
 ):
     if not DISCORD_UPDATE_CHANNEL_ID:
         return
@@ -51,9 +53,9 @@ async def send_sos_global(
     embed.add_field(name="Dungeon", value=dungeon_info, inline=False)
     embed.add_field(name="Rescue Number", value=code, inline=False)
     if title:
-        embed.add_field(name="Title", value=title, inline=False)
+        embed.add_field(name="Title", value=make_pretty(title, lang), inline=False)
     if message:
-        embed.add_field(name="Message", value=message, inline=False)
+        embed.add_field(name="Message", value=make_pretty(message, lang), inline=False)
     try:
         await channel.send(embed=embed)
     except Exception as error:
@@ -68,6 +70,7 @@ async def send_sos(
     message: str,
     dungeon_info: str,
     code: str,
+    lang: int,
 ):
     rescued_user = await get_user_by_username_or_id(rescued_username_or_id)
     rescuer_user = await get_user_by_username_or_id(rescuer_username_or_id)
@@ -83,9 +86,11 @@ async def send_sos(
         embed.add_field(name="Dungeon", value=dungeon_info, inline=False)
         embed.add_field(name="Rescue Number", value=code, inline=False)
         if title:
-            embed.add_field(name="Title", value=title, inline=False)
+            embed.add_field(name="Title", value=make_pretty(title, lang), inline=False)
         if message:
-            embed.add_field(name="Message", value=message, inline=False)
+            embed.add_field(
+                name="Message", value=make_pretty(message, lang), inline=False
+            )
         await rescuer_user.send(embed=embed)
     else:
         raise Exception("Failed to find user: " + rescued_username_or_id)
@@ -100,6 +105,7 @@ async def send_aok_global(
     message: str,
     dungeon_info: str,
     code: str,
+    lang: int,
 ):
     if not DISCORD_UPDATE_CHANNEL_ID:
         return
@@ -125,9 +131,9 @@ async def send_aok_global(
     embed.add_field(name="Dungeon", value=dungeon_info)
     embed.add_field(name="Rescue Number", value=code)
     if title:
-        embed.add_field(name="Title", value=title, inline=False)
+        embed.add_field(name="Title", value=make_pretty(title, lang), inline=False)
     if message:
-        embed.add_field(name="Message", value=message, inline=False)
+        embed.add_field(name="Message", value=make_pretty(message, lang), inline=False)
 
     await channel.send(embed=embed)
 
@@ -141,6 +147,7 @@ async def send_aok(
     message: str,
     dungeon_info: str,
     code: str,
+    lang: int,
 ):
     rescued_user = await get_user_by_username_or_id(rescued_username_or_id)
     rescuer_user = await get_user_by_username_or_id(rescuer_username_or_id)
@@ -157,15 +164,19 @@ async def send_aok(
         embed.add_field(name="Dungeon", value=dungeon_info)
         embed.add_field(name="Rescue Number", value=code)
         if title:
-            embed.add_field(name="Title", value=title, inline=False)
+            embed.add_field(name="Title", value=make_pretty(title, lang), inline=False)
         if message:
-            embed.add_field(name="Message", value=message, inline=False)
+            embed.add_field(
+                name="Message", value=make_pretty(message, lang), inline=False
+            )
         await rescued_user.send(embed=embed)
     else:
         raise Exception("Failed to find user: " + rescued_username_or_id)
 
 
-async def send_thank_you(rescuer_username_or_id: str, title: str, message: str):
+async def send_thank_you(
+    rescuer_username_or_id: str, title: str, message: str, lang: int
+):
     rescuer_user = await get_user_by_username_or_id(rescuer_username_or_id)
 
     if rescuer_user:
@@ -175,9 +186,11 @@ async def send_thank_you(rescuer_username_or_id: str, title: str, message: str):
             color=0x0000FF,
         )
         if title:
-            embed.add_field(name="Title", value=title, inline=False)
+            embed.add_field(name="Title", value=make_pretty(title, lang), inline=False)
         if message:
-            embed.add_field(name="Message", value=message, inline=False)
+            embed.add_field(
+                name="Message", value=make_pretty(message, lang), inline=False
+            )
         await rescuer_user.send(embed=embed)
     else:
         raise Exception("Failed to find user: " + rescuer_username_or_id)
