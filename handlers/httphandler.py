@@ -473,7 +473,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                                 )
                                             )
                                 # Sending A-OK to everyone
-                                if discord_bot.enabled:
+                                if discord_bot.enabled and not rq.private:
                                     asyncio.run_coroutine_threadsafe(
                                         discord_bot.send_aok_global(
                                             rescued_user_name,
