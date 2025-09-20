@@ -30,6 +30,7 @@ if SERVER_MODE == MODE_DS:
     BASEGAME = "pokedungeonds"
     ENCODING = "utf-16-le"
     BYTE_ENCODING = "little"
+    REQUEST_SIZE = 180
     # Email transcoding
     EMAIL_TRANSCO = {}
 elif SERVER_MODE == MODE_WII:
@@ -38,6 +39,7 @@ elif SERVER_MODE == MODE_WII:
     BASEGAME = "pokedngnwii"
     ENCODING = "utf-16-be"
     BYTE_ENCODING = "big"
+    REQUEST_SIZE = 1000
     # Email transcoding
     EMAIL_TRANSCO = {"@wii.com": "@rc24.xyz"}
 else:
@@ -46,6 +48,7 @@ else:
     BASEGAME = "invalid"
     ENCODING = "ascii"
     BYTE_ENCODING = "little"
+    REQUEST_SIZE = 1000
     # Email transcoding
     EMAIL_TRANSCO = {}
 

@@ -281,7 +281,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                     )
                     buffer += len(rlist).to_bytes(8, "big")
                     for rq in rlist:
-                        buffer += rq.getdata(prf.lang if prf.unified else None)
+                        buffer += rq.getdata(prf.lang if prf.unified else None)[
+                            :REQUEST_SIZE
+                        ]
                 elif new_path == "/rescue/rescueRegist.asp":
                     rq = RescueRequest()
                     if select & 0x8000000000000000:
