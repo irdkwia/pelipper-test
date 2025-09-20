@@ -1,5 +1,6 @@
 import asyncio
 import html
+import threading
 import traceback
 from base64 import b64decode, b64encode
 from datetime import datetime
@@ -8,6 +9,7 @@ from http.server import BaseHTTPRequestHandler
 from random import choice, randrange
 from urllib.parse import parse_qs, urlparse
 
+from handlers.notifhandler import NotifHandler
 from mail import discord_bot, plain
 from mail.type import ProfileType
 from prettifier.prettify import make_pretty, translate
@@ -315,83 +317,11 @@ class CustomHandler(BaseHTTPRequestHandler):
                     db.insert_elements([rq])
 
                     try:
-                        rescued_user_name = None
-                        (ty, rescued_identifier) = ProfileType.into_parts(prf.email)
-                        if ty == ProfileType.DISCORD:
-                            rescued_user_name = rescued_identifier
-
-                        if discord_bot.enabled and not rq.private:
-                            asyncio.run_coroutine_threadsafe(
-                                discord_bot.send_sos_global(
-                                    rescued_user_name,
-                                    rq.team,
-                                    rq.title,
-                                    rq.message,
-                                    format_floor(db, rq.dungeon, rq.floor),
-                                    format_rescue_code(rq.rid),
-                                    prf.lang,
-                                ),
-                                discord_bot.bot.loop,
-                            )
-
-                        ptr_include = {
-                            "flags": [
-                                0x20000,
-                                0x20000 | 0x40000,
-                                0x20000 | 0x80000,
-                                0x20000 | 0x40000 | 0x80000,
-                            ]
-                        }
-                        if rq.private:
-                            friends = db.get_elements(
-                                BuddyList,
-                                {"pid": prf.pid},
-                                None,
-                                None,
-                                None,
-                                [("pid", "buddy")],
-                            )
-                            ptr_include.update(
-                                {"pid": [prf.pid] + [b.buddy for b in friends]}
-                            )
-
-                        potential_rescuers = db.get_elements(
-                            Profile, include=ptr_include
+                        t = threading.Thread(
+                            target=NotifHandler.send_rescue_notifications,
+                            args=[db, prf, rq],
                         )
-                        for rescuer_prf in potential_rescuers:
-                            if rescuer_prf.pid == prf.pid:  # Skip yourself
-                                continue
-                            (ty, rescuer_identifier) = ProfileType.into_parts(
-                                rescuer_prf.email
-                            )
-                            if ty == ProfileType.DISCORD:  # Discord user name/ID
-                                if discord_bot.enabled:
-                                    asyncio.run_coroutine_threadsafe(
-                                        discord_bot.send_sos(
-                                            rescued_user_name,
-                                            rescuer_identifier,
-                                            rq.team,
-                                            rq.title,
-                                            rq.message,
-                                            format_floor(db, rq.dungeon, rq.floor),
-                                            format_rescue_code(rq.rid),
-                                            prf.lang,
-                                        ),
-                                        discord_bot.bot.loop,
-                                    )
-                            elif ty == ProfileType.EMAIL:
-                                if plain.enabled:
-                                    asyncio.run(
-                                        plain.send_sos(
-                                            rescuer_identifier,
-                                            rq.team,
-                                            rq.title,
-                                            rq.message,
-                                            format_floor(db, rq.dungeon, rq.floor),
-                                            format_rescue_code(rq.rid),
-                                            prf.lang,
-                                        )
-                                    )
+                        t.start()
                     except Exception:
                         print(traceback.format_exc())
                         print("An exception occured, but rescue was sent successfully")
@@ -424,78 +354,11 @@ class CustomHandler(BaseHTTPRequestHandler):
                             buffer += b"\x00\x00\x00\x01"
 
                             try:
-                                # Sending A-OK
-                                rescued_prf = db.get_elements(
-                                    Profile, {"pid": rq.pid}, limit=1
+                                t = threading.Thread(
+                                    target=NotifHandler.send_aok_notifications,
+                                    args=[db, prf, rq, aok],
                                 )
-                                if len(rescued_prf) > 0:
-                                    rescuer_user_name = None
-                                    (rescuer_ty, rescuer_identifier) = (
-                                        ProfileType.into_parts(prf.email)
-                                    )
-                                    if rescuer_ty == ProfileType.DISCORD:
-                                        rescuer_user_name = rescuer_identifier
-
-                                    # Sending A-OK to user
-                                    rescued_prf = rescued_prf[0]
-                                    rescued_user_name = None
-                                    (rescued_ty, rescued_identifier) = (
-                                        ProfileType.into_parts(rescued_prf.email)
-                                    )
-                                    if rescued_ty == ProfileType.DISCORD:
-                                        rescued_user_name = rescued_identifier
-
-                                    if rescued_prf.flags & 0x40000:
-                                        if rescued_ty == ProfileType.DISCORD:
-                                            if discord_bot.enabled:
-                                                asyncio.run_coroutine_threadsafe(
-                                                    discord_bot.send_aok(
-                                                        rescued_identifier,
-                                                        rescuer_user_name,
-                                                        rq.team,
-                                                        aok.team,
-                                                        aok.title,
-                                                        aok.message,
-                                                        format_floor(
-                                                            db, rq.dungeon, rq.floor
-                                                        ),
-                                                        format_rescue_code(rq.rid),
-                                                        prf.lang,
-                                                    ),
-                                                    discord_bot.bot.loop,
-                                                )
-                                        elif rescued_ty == ProfileType.EMAIL:
-                                            if plain.enabled:
-                                                asyncio.run(
-                                                    plain.send_aok(
-                                                        rescued_identifier,
-                                                        rq.team,
-                                                        aok.team,
-                                                        aok.title,
-                                                        aok.message,
-                                                        format_floor(
-                                                            db, rq.dungeon, rq.floor
-                                                        ),
-                                                        format_rescue_code(rq.rid),
-                                                        prf.lang,
-                                                    )
-                                                )
-                                    # Sending A-OK to everyone
-                                    if discord_bot.enabled and not rq.private:
-                                        asyncio.run_coroutine_threadsafe(
-                                            discord_bot.send_aok_global(
-                                                rescued_user_name,
-                                                rescuer_user_name,
-                                                rq.team,
-                                                aok.team,
-                                                aok.title,
-                                                aok.message,
-                                                format_floor(db, rq.dungeon, rq.floor),
-                                                format_rescue_code(rq.rid),
-                                                prf.lang,
-                                            ),
-                                            discord_bot.bot.loop,
-                                        )
+                                t.start()
                             except Exception:
                                 print(traceback.format_exc())
                                 print(
@@ -516,62 +379,36 @@ class CustomHandler(BaseHTTPRequestHandler):
                     else:
                         buffer += b"\x00\x00\x00\x00"
                 elif new_path == "/rescue/rescueThanks.asp":
-                    thk = RescueThanks()
-                    thk.rid = select
-                    thk.item = data[0:4]
-                    thk.title = translate(
-                        data[4:40].decode("utf-16-be").replace("\x00", ""), prf.lang
-                    )
-                    thk.message = translate(
-                        data[40:112].decode("utf-16-be").replace("\x00", ""), prf.lang
-                    )
-                    db.insert_elements([thk])
-
-                    buffer += b"\x00\x00\x00\x00"
-
-                    try:
-                        # Sending Thank-You
-                        aok = db.get_elements(RescueAOK, {"rid": select}, limit=1)
-
-                        if len(aok) > 0:
-                            aok = aok[0]
-                            rescuer_prf = db.get_elements(
-                                Profile, {"pid": aok.rescuerpid}, limit=1
-                            )
-                            if len(rescuer_prf) > 0:
-                                rescuer_prf = rescuer_prf[0]
-                                if rescuer_prf.flags & 0x80000:
-                                    (ty, rescuer_identifier) = ProfileType.into_parts(
-                                        rescuer_prf.email
-                                    )
-                                    if (
-                                        ty == ProfileType.DISCORD
-                                    ):  # Discord user name/ID
-                                        if discord_bot.enabled:
-                                            asyncio.run_coroutine_threadsafe(
-                                                discord_bot.send_thank_you(
-                                                    rescuer_identifier,
-                                                    thk.title,
-                                                    thk.message,
-                                                    prf.lang,
-                                                ),
-                                                discord_bot.bot.loop,
-                                            )
-                                    elif ty == ProfileType.EMAIL:
-                                        if plain.enabled:
-                                            asyncio.run(
-                                                plain.send_thank_you(
-                                                    rescuer_identifier,
-                                                    thk.title,
-                                                    thk.message,
-                                                    prf.lang,
-                                                )
-                                            )
-                    except Exception:
-                        print(traceback.format_exc())
-                        print(
-                            "An exception occured, but thank you was sent successfully"
+                    aok = db.get_elements(RescueAOK, {"rid": select}, limit=1)
+                    if len(aok) > 0:
+                        aok = aok[0]
+                        thk = RescueThanks()
+                        thk.rid = select
+                        thk.item = data[0:4]
+                        thk.title = translate(
+                            data[4:40].decode("utf-16-be").replace("\x00", ""), prf.lang
                         )
+                        thk.message = translate(
+                            data[40:112].decode("utf-16-be").replace("\x00", ""),
+                            prf.lang,
+                        )
+                        db.insert_elements([thk])
+
+                        buffer += b"\x00\x00\x00\x00"
+
+                        try:
+                            t = threading.Thread(
+                                target=NotifHandler.send_thankyou_notifications,
+                                args=[db, prf, aok, thk],
+                            )
+                            t.start()
+                        except Exception:
+                            print(traceback.format_exc())
+                            print(
+                                "An exception occured, but thank you was sent successfully"
+                            )
+                    else:
+                        buffer += b"\x00\x00\x00\x01"
 
                 elif new_path == "/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
