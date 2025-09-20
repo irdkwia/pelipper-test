@@ -529,41 +529,49 @@ class CustomHandler(BaseHTTPRequestHandler):
 
                     buffer += b"\x00\x00\x00\x00"
 
-                    # Sending Thank-You
-                    aok = db.get_elements(RescueAOK, {"rid": select}, limit=1)
+                    try:
+                        # Sending Thank-You
+                        aok = db.get_elements(RescueAOK, {"rid": select}, limit=1)
 
-                    if len(aok) > 0:
-                        aok = aok[0]
-                        rescuer_prf = db.get_elements(
-                            Profile, {"pid": aok.rescuerpid}, limit=1
-                        )
-                        if len(rescuer_prf) > 0:
-                            rescuer_prf = rescuer_prf[0]
-                            if rescuer_prf.flags & 0x80000:
-                                (ty, rescuer_identifier) = ProfileType.into_parts(
-                                    rescuer_prf.email
-                                )
-                                if ty == ProfileType.DISCORD:  # Discord user name/ID
-                                    if discord_bot.enabled:
-                                        asyncio.run_coroutine_threadsafe(
-                                            discord_bot.send_thank_you(
-                                                rescuer_identifier,
-                                                thk.title,
-                                                thk.message,
-                                                prf.lang,
-                                            ),
-                                            discord_bot.bot.loop,
-                                        )
-                                elif ty == ProfileType.EMAIL:
-                                    if plain.enabled:
-                                        asyncio.run(
-                                            plain.send_thank_you(
-                                                rescuer_identifier,
-                                                thk.title,
-                                                thk.message,
-                                                prf.lang,
+                        if len(aok) > 0:
+                            aok = aok[0]
+                            rescuer_prf = db.get_elements(
+                                Profile, {"pid": aok.rescuerpid}, limit=1
+                            )
+                            if len(rescuer_prf) > 0:
+                                rescuer_prf = rescuer_prf[0]
+                                if rescuer_prf.flags & 0x80000:
+                                    (ty, rescuer_identifier) = ProfileType.into_parts(
+                                        rescuer_prf.email
+                                    )
+                                    if (
+                                        ty == ProfileType.DISCORD
+                                    ):  # Discord user name/ID
+                                        if discord_bot.enabled:
+                                            asyncio.run_coroutine_threadsafe(
+                                                discord_bot.send_thank_you(
+                                                    rescuer_identifier,
+                                                    thk.title,
+                                                    thk.message,
+                                                    prf.lang,
+                                                ),
+                                                discord_bot.bot.loop,
                                             )
-                                        )
+                                    elif ty == ProfileType.EMAIL:
+                                        if plain.enabled:
+                                            asyncio.run(
+                                                plain.send_thank_you(
+                                                    rescuer_identifier,
+                                                    thk.title,
+                                                    thk.message,
+                                                    prf.lang,
+                                                )
+                                            )
+                    except Exception:
+                        print(traceback.format_exc())
+                        print(
+                            "An exception occured, but thank you was sent successfully"
+                        )
 
                 elif new_path == "/rescue/rescueReceive.asp":
                     thk = db.get_elements(RescueThanks, {"rid": select}, limit=1)
