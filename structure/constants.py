@@ -58,6 +58,9 @@ SERVER_ADDR = "192.168.56.1"
 SERVER_ADDR_PUBLIC_1 = "192.168.56.1"  # Change this to your server public address
 SERVER_ADDR_PUBLIC_2 = "192.168.56.1"  # Change this to your server public address
 
+# Change this for custom server implementation
+WONDERMAIL_SERVER = BASEGAME + ".wondermail.net"
+
 RESOLVER = {
     "conntest.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
     "nas.nintendowifi.net": SERVER_ADDR_PUBLIC_2,
@@ -74,7 +77,7 @@ RESOLVER = {
     BASEGAME + ".master.ms1.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
     BASEGAME + ".master.ms2.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
     BASEGAME + ".master.ms3.gs.nintendowifi.net": SERVER_ADDR_PUBLIC_1,
-    BASEGAME + ".wondermail.net": SERVER_ADDR_PUBLIC_2,
+    WONDERMAIL_SERVER: SERVER_ADDR_PUBLIC_2,
 }
 
 LANGTOID = {

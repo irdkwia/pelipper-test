@@ -664,7 +664,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                 elif data["action"].lower() == "svcloc":
                     res = dict()
                     res["returncd"] = "007"  # MAX 3
-                    res["svchost"] = BASEGAME + ".wondermail.net"  # MAX 64
+                    res["svchost"] = WONDERMAIL_SERVER  # MAX 64
                     res["statusdata"] = "Y"  # MAX 1
                     res["servicetoken"] = "MyTokenWondermail"  # MAX 300
                     self.send_form(res)
