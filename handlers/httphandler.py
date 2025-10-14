@@ -560,7 +560,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         gbsr = ""
                     else:
                         gbsr = data["gsbrcd"]
-                    userid = int(data["userid"])
+                    userid = int(data.get("userid", str(randrange(0x80000000000))))
                     gamecd = data["gamecd"]
                     elist = db.get_elements(
                         GlobalProfile, {"gbsr": gbsr, "userid": userid}, limit=1
@@ -660,6 +660,8 @@ class CustomHandler(BaseHTTPRequestHandler):
                     res["datetime"] = datetime.utcnow().strftime(
                         "%Y%m%d%H%M%S"
                     )  # MAX 14
+                    if data["action"] == "acctcreate":
+                        res["userid"] = str(gprofile.userid)
                     self.send_form(res)
                 elif data["action"].lower() == "svcloc":
                     res = dict()
