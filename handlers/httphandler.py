@@ -591,8 +591,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         uid = (
                             int.from_bytes(
                                 md5(
-                                    gbsr.encode("ascii")
-                                    + data["userid"].encode("ascii")
+                                    gbsr.encode("ascii") + str(userid).encode("ascii")
                                 ).digest(),
                                 "big",
                             )
