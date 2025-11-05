@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>RE:EoS</title>
+        <title>{APP_TITLE}</title>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/>
 		<meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,15 +30,8 @@
                     <b>DNS server address</b>: <code>{server_addr}</code>
                 </div>
             </div>
-            
-            <p>
-                This server allows you to use discontinued online features of <i>Pokémon Mystery Dungeon: Explorers of Time</i>,
-                <i>Explorers of Darkness</i> and <i>Explorers of Sky</i>.
-            </p>
-            <p>
-                Refer to <a href="https://wiki.skytemple.org/index.php/How_to_connect_to_custom_Wi-Fi_Connection_Servers">this guide on the SkyTemple Wiki</a>
-                to learn how to connect your Nintendo DS or emulator.
-            </p>
+
+            {preamble_description}
 
             <h2>Waiting for Rescue</h2>
             <p>There are <b>{open_rescues_count}</b> open rescue requests.</p>

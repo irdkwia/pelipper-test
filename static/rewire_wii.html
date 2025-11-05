@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{APP_TITLE}</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"/>
+		<meta charset="utf-8"/>
+	</head>
+	<body>
+		<div class="container">
+			<h1>RE:WIRE</h1>
+			<p>This form must be used in case you've already been assigned a Friend Code in-game before using this service.</p>
+			<p>To check if you have been assigned a Friend Code go to the Adventure Record menu of your team, then "Friend List", "My Friend Code"</p>
+			<p>This lets you rewire your Friend Code to your new profile on this server if it hasn't been already used.</p>
+			<p>Follow the steps below:</p>
+			<ol>
+				<li>Go to your game and rename your team to something unique (best is to fill with random characters)</li>
+				<li>Put the newly chosen team name</li>
+				<li>Put your assigned Friend Code</li>
+				<li>Submit</li>
+				<li>Connect to the Wi-Fi server (the easiest way is to check SOS Mails on the server)</li>
+				<li>You can now change back your user name and team name to their original settings</li>
+			</ol>
+			<form action="/rewire" method="POST">
+				<div class="form-group">
+					<div style="color: %s; background-color: %s;">%s</div>
+					<label for="devname" style="display: none;">User Name:</label>
+					<input class="form-control" type="text" id="devname" name="devname" style="display: none;" value="-"/>
+					<label for="team">Team Name:</label>
+					<input class="form-control" type="text" id="team" name="team" placeholder="Pokemones"/>
+					<label for="code">Friend Code:</label>
+					<input class="form-control" type="text" id="code" name="code" placeholder="0123-4567-8901"/>
+				</div>
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</form> 
+		</div>
+	</body>
+</html>

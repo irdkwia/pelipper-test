@@ -54,6 +54,23 @@ class NotifHandler:
             if rescued_ty == ProfileType.DISCORD:
                 rescued_user_name = rescued_identifier
 
+            # Sending A-OK to everyone
+            if discord_bot.enabled and not rq.private:
+                asyncio.run_coroutine_threadsafe(
+                    discord_bot.send_aok_global(
+                        rescued_user_name,
+                        rescuer_user_name,
+                        rq.team,
+                        aok.team,
+                        aok.title,
+                        aok.message,
+                        format_floor(db, rq.dungeon, rq.floor),
+                        format_rescue_code(rq.rid),
+                        prf.lang,
+                    ),
+                    discord_bot.bot.loop,
+                )
+
             if rescued_prf.flags & 0x40000:
                 if rescued_ty == ProfileType.DISCORD:
                     if discord_bot.enabled:
@@ -85,22 +102,6 @@ class NotifHandler:
                                 prf.lang,
                             )
                         )
-            # Sending A-OK to everyone
-            if discord_bot.enabled and not rq.private:
-                asyncio.run_coroutine_threadsafe(
-                    discord_bot.send_aok_global(
-                        rescued_user_name,
-                        rescuer_user_name,
-                        rq.team,
-                        aok.team,
-                        aok.title,
-                        aok.message,
-                        format_floor(db, rq.dungeon, rq.floor),
-                        format_rescue_code(rq.rid),
-                        prf.lang,
-                    ),
-                    discord_bot.bot.loop,
-                )
 
     @staticmethod
     def send_rescue_notifications(db, prf, rq):
@@ -143,32 +144,35 @@ class NotifHandler:
         for rescuer_prf in potential_rescuers:
             if rescuer_prf.pid == prf.pid:  # Skip yourself
                 continue
-            (ty, rescuer_identifier) = ProfileType.into_parts(rescuer_prf.email)
-            if ty == ProfileType.DISCORD:  # Discord user name/ID
-                if discord_bot.enabled:
-                    asyncio.run_coroutine_threadsafe(
-                        discord_bot.send_sos(
-                            rescued_user_name,
-                            rescuer_identifier,
-                            rq.team,
-                            rq.title,
-                            rq.message,
-                            format_floor(db, rq.dungeon, rq.floor),
-                            format_rescue_code(rq.rid),
-                            prf.lang,
-                        ),
-                        discord_bot.bot.loop,
-                    )
-            elif ty == ProfileType.EMAIL:
-                if plain.enabled:
-                    asyncio.run(
-                        plain.send_sos(
-                            rescuer_identifier,
-                            rq.team,
-                            rq.title,
-                            rq.message,
-                            format_floor(db, rq.dungeon, rq.floor),
-                            format_rescue_code(rq.rid),
-                            prf.lang,
+            try:
+                (ty, rescuer_identifier) = ProfileType.into_parts(rescuer_prf.email)
+                if ty == ProfileType.DISCORD:  # Discord user name/ID
+                    if discord_bot.enabled:
+                        asyncio.run_coroutine_threadsafe(
+                            discord_bot.send_sos(
+                                rescued_user_name,
+                                rescuer_identifier,
+                                rq.team,
+                                rq.title,
+                                rq.message,
+                                format_floor(db, rq.dungeon, rq.floor),
+                                format_rescue_code(rq.rid),
+                                prf.lang,
+                            ),
+                            discord_bot.bot.loop,
                         )
-                    )
+                elif ty == ProfileType.EMAIL:
+                    if plain.enabled:
+                        asyncio.run(
+                            plain.send_sos(
+                                rescuer_identifier,
+                                rq.team,
+                                rq.title,
+                                rq.message,
+                                format_floor(db, rq.dungeon, rq.floor),
+                                format_rescue_code(rq.rid),
+                                prf.lang,
+                            )
+                        )
+            except Exception as e:
+                print(f"Failed delivering SOS notification.\n{e}")

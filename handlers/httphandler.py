@@ -79,10 +79,9 @@ class CustomHandler(BaseHTTPRequestHandler):
             if self.headers.get("host") == "conntest.nintendowifi.net":
                 # Return a simple page if accessed from Nintendo DS
                 with open("static/index.html", "rb") as file:
-                    buffer = file.read()
+                    buffer = file.read().replace(b"{APP_NAME}", APP_NAME)
             else:
                 buffer = self.render_index_page()
-
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -99,8 +98,9 @@ class CustomHandler(BaseHTTPRequestHandler):
             self.wfile.write(buffer)
             return
         elif psplit.path == "/rewire" and REWIRE:
-            with open("static/rewire.html", "rb") as file:
+            with open(REWIRE_LINK, "rb") as file:
                 buffer = file.read() % (b"black", b"white", b"")
+            buffer = buffer.replace(b"{APP_NAME}", APP_NAME)
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -109,7 +109,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             return
         elif psplit.path == "/friend":
             with open("static/friend.html", "rb") as file:
-                buffer = file.read()
+                buffer = file.read().replace(b"{APP_NAME}", APP_NAME)
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -613,10 +613,10 @@ class CustomHandler(BaseHTTPRequestHandler):
                         profile.pid = uid
                         db.insert_elements([gprofile, profile])
                     if profile.devname != data.get(
-                        "devname", ""
-                    ) or profile.team != data.get("ingamesn", ""):
-                        profile.devname = data.get("devname", "")
-                        profile.team = data.get("ingamesn", "")
+                        "devname", "-"
+                    ) or profile.team != data.get("ingamesn", "-"):
+                        profile.devname = data.get("devname", "-")
+                        profile.team = data.get("ingamesn", "-")
                         if REWIRE:
                             pf = db.get_elements(
                                 ProfileChange,
@@ -752,8 +752,9 @@ class CustomHandler(BaseHTTPRequestHandler):
                 self.send_response(404)
                 self.end_headers()
         elif psplit.path == "/rewire" and REWIRE:
-            with open("static/rewire.html", "rb") as file:
+            with open(REWIRE_LINK, "rb") as file:
                 buffer = file.read()
+            buffer = buffer.replace(b"{APP_NAME}", APP_NAME)
             ctype = self.headers.get("content-type")
             if ctype == "application/x-www-form-urlencoded":
                 try:
@@ -782,7 +783,11 @@ class CustomHandler(BaseHTTPRequestHandler):
                                 buffer = buffer % (
                                     b"white",
                                     b"red",
-                                    b"You must choose another User Name and Team Name combination.",
+                                    (
+                                        b"You must choose another Team Name."
+                                        if SERVER_MODE == MODE_WII
+                                        else b"You must choose another User Name and Team Name combination."
+                                    ),
                                 )
                             elif len(db.get_elements(Profile, {"pid": code})) > 0:
                                 buffer = buffer % (
@@ -834,6 +839,16 @@ class CustomHandler(BaseHTTPRequestHandler):
 
         with open("static/templates/rescue.html", encoding="utf-8") as file:
             rescue_template = file.read()
+
+        with open(
+            (
+                "static/templates/preamble_wii.html"
+                if SERVER_MODE == MODE_WII
+                else "static/templates/preamble_ds.html"
+            ),
+            encoding="utf-8",
+        ) as file:
+            preamble_description = file.read()
 
         db = Connection()
 
@@ -892,6 +907,8 @@ class CustomHandler(BaseHTTPRequestHandler):
             rescue_cards.append(card)
 
         params = {
+            "APP_NAME": APP_NAME.decode("utf-8"),
+            "preamble_description": preamble_description,
             "server_addr": SERVER_ADDR,
             "profile_count": profile_count,
             "sos_mail_count": sos_mail_count,
