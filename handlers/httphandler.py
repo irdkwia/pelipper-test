@@ -79,7 +79,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             if self.headers.get("host") == "conntest.nintendowifi.net":
                 # Return a simple page if accessed from Nintendo DS
                 with open("static/index.html", "rb") as file:
-                    buffer = file.read().replace(b"{APP_NAME}", APP_NAME)
+                    buffer = file.read().replace(b"{APP_TITLE}", APP_TITLE)
             else:
                 buffer = self.render_index_page()
             self.send_response(200)
@@ -100,7 +100,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         elif psplit.path == "/rewire" and REWIRE:
             with open(REWIRE_LINK, "rb") as file:
                 buffer = file.read() % (b"black", b"white", b"")
-            buffer = buffer.replace(b"{APP_NAME}", APP_NAME)
+            buffer = buffer.replace(b"{APP_TITLE}", APP_TITLE)
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -109,7 +109,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             return
         elif psplit.path == "/friend":
             with open("static/friend.html", "rb") as file:
-                buffer = file.read().replace(b"{APP_NAME}", APP_NAME)
+                buffer = file.read().replace(b"{APP_TITLE}", APP_TITLE)
             self.send_response(200)
             self.end_headers()
             self.send_header("Content-Type", "text/html")
@@ -754,7 +754,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         elif psplit.path == "/rewire" and REWIRE:
             with open(REWIRE_LINK, "rb") as file:
                 buffer = file.read()
-            buffer = buffer.replace(b"{APP_NAME}", APP_NAME)
+            buffer = buffer.replace(b"{APP_TITLE}", APP_TITLE)
             ctype = self.headers.get("content-type")
             if ctype == "application/x-www-form-urlencoded":
                 try:
@@ -907,7 +907,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             rescue_cards.append(card)
 
         params = {
-            "APP_NAME": APP_NAME.decode("utf-8"),
+            "APP_TITLE": APP_TITLE.decode("utf-8"),
             "preamble_description": preamble_description,
             "server_addr": SERVER_ADDR,
             "profile_count": profile_count,

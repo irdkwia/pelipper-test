@@ -31,7 +31,7 @@ if SERVER_MODE == MODE_DS:
     ENCODING = "utf-16-le"
     BYTE_ENCODING = "little"
     REQUEST_SIZE = 180
-    APP_NAME = b"RE:EoS"
+    APP_TITLE = b"RE:EoS"
     REWIRE_LINK = "static/rewire_ds.html"
     # Email transcoding
     EMAIL_TRANSCO = {}
@@ -42,7 +42,7 @@ elif SERVER_MODE == MODE_WII:
     ENCODING = "utf-16-be"
     BYTE_ENCODING = "big"
     REQUEST_SIZE = 1000
-    APP_NAME = b"RE:Wii"
+    APP_TITLE = b"RE:Wii"
     REWIRE_LINK = "static/rewire_wii.html"
     # Email transcoding
     EMAIL_TRANSCO = {"@wii.com": "@rc24.xyz"}
@@ -53,7 +53,7 @@ else:
     ENCODING = "ascii"
     BYTE_ENCODING = "little"
     REQUEST_SIZE = 1000
-    APP_NAME = b""
+    APP_TITLE = b""
     REWIRE_LINK = "static/rewire_ds.html"
     # Email transcoding
     EMAIL_TRANSCO = {}
