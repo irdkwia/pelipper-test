@@ -99,7 +99,7 @@ LANGTOID = {
 # Enter an optional Discord bot token here
 DISCORD_TOKEN = None
 # A channel ID to post SOS mail to, or `None` if no updates should be posted
-DISCORD_UPDATE_CHANNEL_ID = None
+DISCORD_UPDATE_CHANNEL_IDS = []
 
 # Plain Email
 # Whether to use TLS for sending emails

@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from prettifier.prettify import make_pretty
-from structure.constants import DISCORD_TOKEN, DISCORD_UPDATE_CHANNEL_ID
+from structure.constants import DISCORD_TOKEN, DISCORD_UPDATE_CHANNEL_IDS
 
 description = """A bot that notifies users about WFC events in PMD: Explorers of Sky, such as dungeon rescues."""
 
@@ -33,11 +33,6 @@ async def send_sos_global(
     code: str,
     lang: int,
 ):
-    if not DISCORD_UPDATE_CHANNEL_ID:
-        return
-
-    channel = bot.get_channel(DISCORD_UPDATE_CHANNEL_ID)
-
     rescued_user = None
     if rescued_username_or_id:
         rescued_user = await get_user_by_username_or_id(rescued_username_or_id)
@@ -56,10 +51,13 @@ async def send_sos_global(
         embed.add_field(name="Title", value=make_pretty(title, lang), inline=False)
     if message:
         embed.add_field(name="Message", value=make_pretty(message, lang), inline=False)
-    try:
-        await channel.send(embed=embed)
-    except Exception as error:
-        print("Error:", error)
+
+    for chan_id in DISCORD_UPDATE_CHANNEL_IDS:
+        channel = bot.get_channel(chan_id)
+        try:
+            await channel.send(embed=embed)
+        except Exception as error:
+            print("Error:", error)
 
 
 async def send_sos(
@@ -107,11 +105,6 @@ async def send_aok_global(
     code: str,
     lang: int,
 ):
-    if not DISCORD_UPDATE_CHANNEL_ID:
-        return
-
-    channel = bot.get_channel(DISCORD_UPDATE_CHANNEL_ID)
-
     rescued_user = await get_user_by_username_or_id(rescued_username_or_id)
     rescuer_user = await get_user_by_username_or_id(rescuer_username_or_id)
 
@@ -135,7 +128,12 @@ async def send_aok_global(
     if message:
         embed.add_field(name="Message", value=make_pretty(message, lang), inline=False)
 
-    await channel.send(embed=embed)
+    for chan_id in DISCORD_UPDATE_CHANNEL_IDS:
+        channel = bot.get_channel(chan_id)
+        try:
+            await channel.send(embed=embed)
+        except Exception as error:
+            print("Error:", error)
 
 
 async def send_aok(
