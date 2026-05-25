@@ -14,7 +14,7 @@ class NotifHandler:
         if len(rescuer_prf) > 0:
             rescuer_prf = rescuer_prf[0]
             if rescuer_prf.flags & 0x80000:
-                (ty, rescuer_identifier) = ProfileType.into_parts(rescuer_prf.email)
+                ty, rescuer_identifier = ProfileType.into_parts(rescuer_prf.email)
                 if ty == ProfileType.DISCORD:  # Discord user name/ID
                     if discord_bot.enabled:
                         asyncio.run_coroutine_threadsafe(
@@ -43,14 +43,14 @@ class NotifHandler:
         rescued_prf = db.get_elements(Profile, {"pid": rq.pid}, limit=1)
         if len(rescued_prf) > 0:
             rescuer_user_name = None
-            (rescuer_ty, rescuer_identifier) = ProfileType.into_parts(prf.email)
+            rescuer_ty, rescuer_identifier = ProfileType.into_parts(prf.email)
             if rescuer_ty == ProfileType.DISCORD:
                 rescuer_user_name = rescuer_identifier
 
             # Sending A-OK to user
             rescued_prf = rescued_prf[0]
             rescued_user_name = None
-            (rescued_ty, rescued_identifier) = ProfileType.into_parts(rescued_prf.email)
+            rescued_ty, rescued_identifier = ProfileType.into_parts(rescued_prf.email)
             if rescued_ty == ProfileType.DISCORD:
                 rescued_user_name = rescued_identifier
 
@@ -106,7 +106,7 @@ class NotifHandler:
     @staticmethod
     def send_rescue_notifications(db, prf, rq):
         rescued_user_name = None
-        (ty, rescued_identifier) = ProfileType.into_parts(prf.email)
+        ty, rescued_identifier = ProfileType.into_parts(prf.email)
         if ty == ProfileType.DISCORD:
             rescued_user_name = rescued_identifier
         if discord_bot.enabled and not rq.private:
@@ -145,7 +145,7 @@ class NotifHandler:
             if rescuer_prf.pid == prf.pid:  # Skip yourself
                 continue
             try:
-                (ty, rescuer_identifier) = ProfileType.into_parts(rescuer_prf.email)
+                ty, rescuer_identifier = ProfileType.into_parts(rescuer_prf.email)
                 if ty == ProfileType.DISCORD:  # Discord user name/ID
                     if discord_bot.enabled:
                         asyncio.run_coroutine_threadsafe(

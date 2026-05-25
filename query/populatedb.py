@@ -16,54 +16,40 @@ con = sqlite3.connect("../database/pelipper.db")
 cur = con.cursor()
 
 if DEFAULT_WII:
-    cur.execute(
-        """
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("ZH5ufUAag38i6EJn", "pokedngnwii", "0", 2, 0)
-    """
-    )
+    """)
 
 if DEFAULT_SKY:
-    cur.execute(
-        """
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("HauZn7x2QjAJGzPC", "pokedungeonds", "8", 2, 0)
-    """
-    )
+    """)
 
-    cur.execute(
-        """
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("AyCuHrGSJMKV4qja", "pokedungeonds", "1", 2, 0)
-    """
-    )
+    """)
 
-    cur.execute(
-        """
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("6wByfR3qMdV7ztsh", "pokedungeonds", "0", 2, 0)
-    """
-    )
+    """)
 
 if DEFAULT_TIMEDARK:
-    cur.execute(
-        """
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("JtzPrHhkBeiuyjfA", "pokedungeonds", "8", 0, 0)
-    """
-    )
-    cur.execute(
-        """
+    """)
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("VFUXYijc4Bbg8mQJ", "pokedungeonds", "1,2,3,4,5", 0, 0)
-    """
-    )
-    cur.execute(
-        """
+    """)
+    cur.execute("""
         INSERT INTO wmgamelist (passwd, prefix, lang, version, udate)
         VALUES ("FYm6NkH74vRys59T", "pokedungeonds", "0", 0, 0)
-    """
-    )
+    """)
 
 if GABITE:
     cur.execute(

@@ -372,3 +372,6 @@ SOURCE_WM = [
     1510334235,
     755167117,
 ]
+BASE64_TRANSCO = [(".", "+"), ("-", "/"), ("*", "=")]
+BASE64_TFROM = str.maketrans({v[0]: v[1] for v in BASE64_TRANSCO})
+BASE64_TTO = str.maketrans({v[1]: v[0] for v in BASE64_TRANSCO})

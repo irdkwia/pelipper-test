@@ -38,7 +38,7 @@ class CustomHandler(BaseHTTPRequestHandler):
         denc = parse_qs(self.rfile.read(length).decode("ascii"))
         data = dict()
         for k, v in denc.items():
-            s = b64decode(v[0].translate(str.maketrans({"-": "+", "_": "/", "*": "="})))
+            s = b64decode(v[0].translate(BASE64_TFROM))
             if k in ["words"]:
                 data[k] = s
             elif k in ["devname", "ingamesn"]:
@@ -59,10 +59,7 @@ class CustomHandler(BaseHTTPRequestHandler):
             buffer += (
                 k.encode("ascii")
                 + b"="
-                + b64encode(v)
-                .decode("ascii")
-                .translate(str.maketrans({"+": "-", "/": "_", "=": "*"}))
-                .encode("ascii")
+                + b64encode(v).decode("ascii").translate(BASE64_TTO).encode("ascii")
             )
         self.send_response(200)
         self.send_header("Content-Type", "application/x-www-form-urlencoded")
@@ -146,7 +143,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     return
                 prf.currenthash = None
                 data = query["data"][0]
-                data = b64decode(data.translate(str.maketrans({"-": "+", "_": "/"})))
+                data = b64decode(data.translate(BASE64_TFROM))
                 checksum = int.from_bytes(data[:4], "big")
                 nc = sum(data[4:])
                 if checksum != nc ^ CHECKMASK:
@@ -438,7 +435,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                         full_code = "%03d-%04d" % (ccode, scode)
                         print("Code: " + full_code)
 
-                        (ty, identifier) = ProfileType.into_parts(email)
+                        ty, identifier = ProfileType.into_parts(email)
                         if ty == ProfileType.DISCORD:
                             if discord_bot.enabled:
                                 # If the entered email is not a real email address, treat it as a Discord ID/user name
@@ -502,7 +499,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     buffer += self.conndigest(
                         b64encode(buffer)
                         .decode("ascii")
-                        .translate(str.maketrans({"+": "-", "/": "_"}))
+                        .translate(BASE64_TTO)
                         .encode("ascii"),
                         True,
                     ).encode("ascii")
@@ -712,9 +709,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                                     + "\t"
                                     + b64encode(b"")
                                     .decode("ascii")
-                                    .translate(
-                                        str.maketrans({"+": "-", "/": "_", "=": "*"})
-                                    )
+                                    .translate(BASE64_TTO)
                                     + "\t\t\t\t"
                                     + str(len(wm.data) + 32)
                                     + "\r\n"
