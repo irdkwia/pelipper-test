@@ -2,7 +2,7 @@ import asyncio
 import html
 import threading
 import traceback
-from base64 import b64decode, b64encode
+from base64 import b64decode, b64encode, urlsafe_b64decode, urlsafe_b64encode
 from datetime import datetime
 from hashlib import md5, sha1
 from http.server import BaseHTTPRequestHandler
@@ -143,7 +143,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     return
                 prf.currenthash = None
                 data = query["data"][0]
-                data = b64decode(data.translate(BASE64_TFROM))
+                data = urlsafe_b64decode(data)
                 checksum = int.from_bytes(data[:4], "big")
                 nc = sum(data[4:])
                 if checksum != nc ^ CHECKMASK:
@@ -497,10 +497,7 @@ class CustomHandler(BaseHTTPRequestHandler):
                     buffer = bytearray(statuscode.to_bytes(4, "big")) + buffer
                 if adddigest:
                     buffer += self.conndigest(
-                        b64encode(buffer)
-                        .decode("ascii")
-                        .translate(BASE64_TTO)
-                        .encode("ascii"),
+                        urlsafe_b64encode(buffer),
                         True,
                     ).encode("ascii")
                 if CAPTURE:
